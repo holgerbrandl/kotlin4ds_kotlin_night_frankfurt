@@ -228,7 +228,7 @@ dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
 val df: DataFrame = dataFrame.leftJoin(otherDF)
 
 // transformation
-dataFrame.addColumn("new_id"){ it["user"].map<User>{ it.id }}
+dataFrame.addColumn("intial"){ it["user"].map<User>{ it.name.first() }}
 
 // ...
 ```
@@ -263,6 +263,51 @@ Rather ambitious goal goal
 Pandas Examples:
 https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-manipulation/
 
+
+---
+### Data model in `krangl`
+
+What is a DataFrame?
+```kotlin
+interface DataFrame {
+    val cols: List<DataCol>
+}
+
+abstract class DataCol(val name: String) {
+    abstract fun values(): Array<*>
+}
+
+```
+
+---
+### Get your data into krangl
+
+
+Read from tsv, csv, json, jdbc, e.g.
+```kotlin
+val users = dataFrameOf(
+    "firstName", "lastName", "age", "hasSudo")(
+    "max", "smith" , 53, false,
+    "eva", "miller", 23, true,
+    null , "meyer" , 23, null)
+ 
+val tornados = DataFrame.readCSV(pathAsStringFileOrUrl)
+tornados.writeCSV(File("tornados.txt.gz"))
+```
+
+* Guess column types
+* Built-in missing value support
+* Convert any iterable into a data-frame via reflection
+
+```kotlin
+data class Person(val name:String, val address:String)
+val persons : List<Person> = ...
+
+val personsDF: DataFrame = persons.asDataFrame() 
+```
+
+
+
 ---
 ## What do we need?
 
@@ -279,15 +324,6 @@ background-image: url(images/tidyr_cs.png)
 background-position: center
 background-repeat: no-repeat
 background-size: 80%
-
----
-### Data prep in `krangl`
-
-Read from tsv, csv, json, or any delimited format with or without header from local or remote
-```kotlin
-data
-
-```
 
 
 ---
@@ -447,17 +483,82 @@ coming back to initial motivation.
 
  ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
 
+
+---
+## Bumpy API corners
+
+Don't overload `operator Any?.plus` --> Confusion
+
+```kotlin
+// will just add 3 to list of objects
+users.addColumn("age_plus_3") { it["user"].map<User> { it.age } + 3 }
+// correct
+users.addColumn("age_plus_3") { it["user"].map<User> { it.age + 3 }  }
+
+// works because `DataCol.plus` can be defined
+users.addColumn("age_plus_3") { it["age"] + 3 }  }
+```
+
+receiver vs parameter functions
+* Extension functions are tempting, but for many `mean(x)` feels less natural compared to `x.mean()` (or even `x.mean`
+```
+dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
+// function paramater
+dataFrame.summarize("mean_salary"){ it["salaray"].mean()}
+// extension property
+dataFrame.summarize("mean_salary"){ it["salaray"].mean}
+```
+
+pro & con?
+
+
+---
+## API design fun: type aliases + extensions + operator overloading
+
+User side:
+```kotlin
+staff.addColumn("age_plus_3") { it["age"] + 3 }
+```
+
+Backbone:
+```kotlin
+fun DataFrame.addColumn(columnName: String, expression: TableExpression): DataFrame = 
+    addColumn(ColumnFormula(columnName, expression))
+//...
+typealias TableExpression = ExpressionContext.(ExpressionContext) -> Any?
+//...
+class ExpressionContext(val df: DataFrame) {
+    operator fun get(name: String): DataCol = df[name]
+
+    val rowNumber: List<Int> get() = (1..df.nrow).toList()
+
+    val nrow = df.nrow
+}
+
+```
+
+`it` in examples is instance `ExpressionContext` proxying the `df`.
+
+`Foo.(Foo)`: Allows to refer with `it` and `this` to expression context:
+```kotlin
+staff.addColumn("row_number") { nrow }
+staff.addColumn("intital") { it["name"].map<String>{ it.first()} }
+
+```
+
 ---
 ## Next steps
 
 
 Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis & [kscript](https://github.com/holgerbrandl/kscript)
-* Performance
-* Allow to use pluggable backends
+* Performance (indcies, compressed columns)
+* Parquet support
+* Allow to pluggable backends
 * Fill missing-bits and pieces
+* More bindings to other jvm datascience libraries
 * Docs & Blogs
-
-
+* Build own cheatsheets
+* Reiteratve over API again and again
 
 
 

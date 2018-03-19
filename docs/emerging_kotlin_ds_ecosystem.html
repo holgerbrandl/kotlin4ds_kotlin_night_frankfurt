@@ -233,7 +233,7 @@ dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
 val df: DataFrame = dataFrame.leftJoin(otherDF)
 
 // transformation
-dataFrame.addColumn("new_id"){ it["user"].map&lt;User&gt;{ it.id }}
+dataFrame.addColumn("intial"){ it["user"].map&lt;User&gt;{ it.name.first() }}
 
 // ...
 ```
@@ -268,6 +268,51 @@ Rather ambitious goal goal
 Pandas Examples:
 https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-manipulation/
 
+
+---
+### Data model in `krangl`
+
+What is a DataFrame?
+```kotlin
+interface DataFrame {
+    val cols: List&lt;DataCol&gt;
+}
+
+abstract class DataCol(val name: String) {
+    abstract fun values(): Array&lt;*&gt;
+}
+
+```
+
+---
+### Get your data into krangl
+
+
+Read from tsv, csv, json, jdbc, e.g.
+```kotlin
+val users = dataFrameOf(
+    "firstName", "lastName", "age", "hasSudo")(
+    "max", "smith" , 53, false,
+    "eva", "miller", 23, true,
+    null , "meyer" , 23, null)
+ 
+val tornados = DataFrame.readCSV(pathAsStringFileOrUrl)
+tornados.writeCSV(File("tornados.txt.gz"))
+```
+
+* Guess column types
+* Built-in missing value support
+* Convert any data-class iterable into a data-frame via reflection
+
+```kotlin
+data class Person(val name:String, val address:String)
+val persons : List&lt;Person&gt; = ...
+
+val personsDF: DataFrame = persons.asDataFrame() 
+```
+
+
+
 ---
 ## What do we need?
 
@@ -285,8 +330,6 @@ background-position: center
 background-repeat: no-repeat
 background-size: 80%
 
----
-Data prep in `krangl`
 
 ---
 background-image: url(images/data_trafo_1_cs.png)
@@ -433,14 +476,96 @@ adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/master/beakerx
 
 
 ---
+## What's still missing in Kotlin to rule data-science?
+
+1. **Interactivity**: Improve jupyter-kernel support (interactive usage, idea notebook editor support)
+2. Coherent **API for visualization**
+3. **Data-Science IDE**: Fix annoying IDE bugs &amp; provide extension points
+
+???
+
+coming back to initial motivation.
+
+ ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
+
+
+---
+## Bumpy API corners
+
+Don't overload `operator Any?.plus` --&gt; Confusion
+
+```kotlin
+// will just add 3 to list of objects
+users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age } + 3 }
+// correct
+users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age + 3 }  }
+
+// works because `DataCol.plus` can be defined
+users.addColumn("age_plus_3") { it["age"] + 3 }  }
+```
+
+receiver vs parameter functions
+* Extension functions are tempting, but for many `mean(x)` feels less natural compared to `x.mean()` (or even `x.mean`
+```
+dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
+// function paramater
+dataFrame.summarize("mean_salary"){ it["salaray"].mean()}
+// extension property
+dataFrame.summarize("mean_salary"){ it["salaray"].mean}
+```
+
+pro &amp; con?
+
+
+---
+## API design fun: type aliases + extensions + operator overloading
+
+User side:
+```kotlin
+staff.addColumn("age_plus_3") { it["age"] + 3 }
+```
+
+Backbone:
+```kotlin
+fun DataFrame.addColumn(columnName: String, expression: TableExpression): DataFrame = 
+    addColumn(ColumnFormula(columnName, expression))
+//...
+typealias TableExpression = ExpressionContext.(ExpressionContext) -&gt; Any?
+//...
+class ExpressionContext(val df: DataFrame) {
+    operator fun get(name: String): DataCol = df[name]
+
+    val rowNumber: List&lt;Int&gt; get() = (1..df.nrow).toList()
+
+    val nrow = df.nrow
+}
+
+```
+
+`it` in examples is instance `ExpressionContext` proxying the `df`.
+
+`Foo.(Foo)`: Allows to refer with `it` and `this` to expression context:
+```kotlin
+staff.addColumn("row_number") { nrow }
+staff.addColumn("intital") { it["name"].map&lt;String&gt;{ it.first()} }
+
+```
+
+---
 ## Next steps
 
 
 Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis &amp; [kscript](https://github.com/holgerbrandl/kscript)
-* Performance
-* Allow to use pluggable backends
+* Performance (indcies, compressed columns)
+* Parquet support
+* Allow to pluggable backends
 * Fill missing-bits and pieces
+* More bindings to other jvm datascience libraries
 * Docs &amp; Blogs
+* Build own cheatsheets
+* Implement `Iterable&lt;Foo&gt;.asDataFrame()` for complex cascaded types and not just data-classes
+* Reiteratve over API again and again
+
 
 
 ---
