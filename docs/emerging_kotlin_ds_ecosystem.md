@@ -1101,41 +1101,133 @@ Data Science Stack
 * Render this presentation with the kotlin kernel
 * Fill missing-bits and pieces
 * Evolve report rendering approach into tool
-* Continue `kravis` for visualzation including a JVM DS plotting device
+* Continue `kravis` for visualization including a JVM DS plotting device
 
 
 
 ---
-# **The** IDE
+
+```kotlin
+//' ## Flowers Analysis
+
+//' The iris flower:
+//' ![](https://goo.gl/tTbZMq)
+
+@file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
+@file:DependsOnMaven("de.mpicbg.scicomp:krangl:0.7")
+
+import krangl.*
 
 
-R --> [RStudio](https://www.rstudio.com/) or R [Plugin for Intellij](https://plugins.jetbrains.com/plugin/6632-r-language-support)
 
-Python --> [Spyder](https://github.com/spyder-ide/spyder) or pycharm
+//' The first records ininput data which is bundled with krangl is
+irisData
 
-kernel is there but not yet fun
+//' The structure of the input data is
+irisData.glimpse()
+
+//' Calculate mean petal width
+val summarizeDf: DataFrame = irisData
+    .groupBy("Species")
+    .summarize("mean_petal_width") { it["Petal.Width"].mean() }
+
+summarizeDf.print()
+
+//' conclusion: Iris flowers of species _virginica_ have on average largest petal width.
+```
+
+
+---
+# `kts->html` converter
+
+```bash
+inputScript=krangl_example_report.kts
+reportName=$(basename $inputScript .kts)
+
+# https://www.r-project.org/
+Rscript - ${inputScript} <<"EOF"
+knitr::spin(commandArgs(T)[1], doc = "^//'[ ]?", knit=F)
+EOF
+
+# https://github.com/holgerbrandl/kscript
+kscript -t 'lines.map { it.replace("{r }", "")}.print()' ${reportName}.Rmd > ${reportName}.md
+
+# https://github.com/aaren/notedown
+notedown ${reportName}.md > ${reportName}.ipynb
+
+# http://jupyter.org/install
+jupyter nbconvert --ExecutePreprocessor.kernel_name=kotlin \
+        --execute --to html ${reportName}.ipynb --output ${reportName}
+```
+
+All but the last step could be reworked into a standalone tool.
+
+Alternative approaches?
+
+---
+
+<a href="../src/main/kotlin/report_rendering/krangl_example_report.html" rel="some text">![](images/kts_report.png)</a>
+
+
+---
+
+background-image: url(images/the_ide.png)
+background-position: center
+background-size: 88%
+
+
+---
+
+background-image: url(images/bugs.png)
+background-position: center
+background-size: 100%
+
+# Is **THE** IDE ready for Kotlin data sciene?
+
+Almost.
 
 --
 
-### Vote in YT and raise your voice!
+`kts` support still not yet ready for primetime
 
----
-## What's still missing in Kotlin to rule data-science?
+* [KT-11618](https://youtrack.jetbrains.com/issue/KT-11618) Dependencies are ignored in .kts files
+* [KT-15019](https://youtrack.jetbrains.com/issue/KT-15019) Editor: `args` reference in .kts file is red
+* [KT-6928](https://youtrack.jetbrains.com/issue/KT-6928) Support Kotlin scratch files
+* [KT-11473](https://youtrack.jetbrains.com/issue/KT-11473) Allow debugging of Kotlin scripts
 
-1. **Interactivity**: Improve jupyter-kernel support (interactive usage, idea notebook editor support)
-2. Coherent **API for visualization**
-3. **Data-Science IDE**: Fix annoying IDE bugs & provide extension points
+--
+
+REPL needs more work
+
+* [KT-11409](https://youtrack.jetbrains.com/issue/KT-11409) Add action "Send Selection To Kotlin Console"
+* [KT-12583](https://youtrack.jetbrains.com/issue/KT-12583) IDE REPL should run in project root directory
+* [KT-7100](https://youtrack.jetbrains.com/issue/KT-7100) REPL: allow adding a library to the classpath
+* [KT-14851](https://youtrack.jetbrains.com/issue/KT-14851) "this" is always defined in Kotlin REPL
+* [KT-21224](https://youtrack.jetbrains.com/issue/KT-21224 ) Incorrect alignment of commands and outputs in REPL
+
+--
+
+No graphics device
+
+--
+
+### Raise your voice and vote on https://youtrack.jetbrains.com
 
 ???
 
-coming back to initial motivation.
+graphics device: extension points + plugin
 
- ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
+Make the world a better place by raising...
 
+
+
+kotlin conf rumours about **Data-Science IDE**
 
 
 ---
-## Summary
+class:  inverse
+
+# Summary
 
 
 ###  `krangl` is a {K}otlin library for data w{rangl}ing. It allows to filter, transform, aggregate and reshape tabular data.
@@ -1143,6 +1235,10 @@ coming back to initial motivation.
 --
 
 ### There's a fascinating JVM data science ecosystem out there, ready to be unleashed on your data
+
+---
+
+### Most wanted: Consistent visualization API for Kotlin/JVM
 
 --
 

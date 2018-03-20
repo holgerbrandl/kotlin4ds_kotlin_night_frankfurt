@@ -840,7 +840,6 @@ Project still in flux towards a convenient and consistent API design
 
 
 ---
-
 class: middle, inverse
 
 ### Outline
@@ -850,6 +849,7 @@ class: middle, inverse
 # Beyond Tables
 ### Data Visualization
 ### Reporting &amp; Notebooks
+
 
 ---
 # Beyond Tables
@@ -939,7 +939,7 @@ plotOf(movies) {  mark = Mark(circle)
 ```kotlin
 val irisArray = irisData.remove("Species").toArray()
 
-val pca = PCA(irisArray)
+val pca = smile.projection.PCA(irisArray)
 
 //barchart
 plotOf(pca.varianceProportion.toList()) {
@@ -1014,6 +1014,16 @@ val irisModel = irisData
 
 ```
 
+---
+class: middle, inverse
+
+### Outline
+
+### Ingredients for data science?
+### Table Wrangling
+### Beyond Tables
+### Data Visualization
+# Reporting &amp; Notebooks
 
 
 ---
@@ -1062,7 +1072,7 @@ https://github.com/ligee/kotlin-jupyter
 
 * More established
 * Backed by JB
-* Friendly and responsive developer
+* Friendly and responsive developers
 * Not really active
 
 https://github.com/twosigma/beakerx
@@ -1070,7 +1080,9 @@ https://github.com/twosigma/beakerx
 &gt; a collection of JVM kernels and interactive widgets for plotting, tables, auto-translation, and other extensions to Jupyter Notebook.
 
 * Very active, fast progress
-* Not just a kernel
+* Friendly and very responsive developers
+* Not __just__ a kernel
+* Display handler registry in kernel `krangl.beakerx.TableDisplayer.register()`
 
 ???
 
@@ -1090,24 +1102,126 @@ beakerx: adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/maste
 
 How to achieve this with Kotlin?
 
+Data Science Stack
+
+* Render this presentation with the kotlin kernel
+* Fill missing-bits and pieces
+* Evolve report rendering approach into tool
+* Continue `kravis` for visualization including a JVM DS plotting device
+
+
 
 ---
-## What else?
 
-* https://github.com/jtablesaw/tablesaw
-* https://github.com/kyonifer/koma
+```kotlin
+//' ## Flowers Analysis
 
+//' The iris flower:
+//' ![](https://goo.gl/tTbZMq)
+
+@file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
+@file:DependsOnMaven("de.mpicbg.scicomp:krangl:0.7")
+
+import krangl.*
+
+
+
+//' The first records ininput data which is bundled with krangl is
+irisData
+
+//' The structure of the input data is
+irisData.glimpse()
+
+//' Calculate mean petal width
+val summarizeDf: DataFrame = irisData
+    .groupBy("Species")
+    .summarize("mean_petal_width") { it["Petal.Width"].mean() }
+
+summarizeDf.print()
+
+//' conclusion: Iris flowers of species _virginica_ have on average largest petal width.
+```
 
 
 ---
-# **The** IDE
+# `kts-&gt;html` converter
+
+```bash
+inputScript=krangl_example_report.kts
+reportName=$(basename $inputScript .kts)
+
+# https://www.r-project.org/
+Rscript - ${inputScript} &lt;&lt;"EOF"
+knitr::spin(commandArgs(T)[1], doc = "^//'[ ]?", knit=F)
+EOF
+
+# https://github.com/holgerbrandl/kscript
+kscript -t 'lines.map { it.replace("{r }", "")}.print()' ${reportName}.Rmd &gt; ${reportName}.md
+
+# https://github.com/aaren/notedown
+notedown ${reportName}.md &gt; ${reportName}.ipynb
+
+# http://jupyter.org/install
+jupyter nbconvert --ExecutePreprocessor.kernel_name=kotlin \
+        --execute --to html ${reportName}.ipynb --output ${reportName}
+```
+
+All but the last step could be reworked into a standalone tool.
+
+Alternative approaches?
+
+---
+
+&lt;a href="../src/main/kotlin/report_rendering/krangl_example_report.html" rel="some text"&gt;![](images/kts_report.png)&lt;/a&gt;
 
 
-R --&gt; [RStudio](https://www.rstudio.com/) or R [Plugin for Intellij](https://plugins.jetbrains.com/plugin/6632-r-language-support)
+---
 
-Python --&gt; [Spyder](https://github.com/spyder-ide/spyder) or pycharm
+background-image: url(images/the_ide.png)
+background-position: center
+background-size: 88%
 
-kernel is there but not yet fun
+
+---
+
+background-image: url(images/bugs.png)
+background-position: center
+background-size: 100%
+
+# Is **THE** IDE ready for Kotlin data sciene?
+
+Almost.
+
+--
+
+`kts` support still not yet ready for primetime
+
+* [KT-11618](https://youtrack.jetbrains.com/issue/KT-11618) Dependencies are ignored in .kts files
+* [KT-15019](https://youtrack.jetbrains.com/issue/KT-15019) Editor: `args` reference in .kts file is red
+* [KT-6928](https://youtrack.jetbrains.com/issue/KT-6928) Support Kotlin scratch files
+* [KT-11473](https://youtrack.jetbrains.com/issue/KT-11473) Allow debugging of Kotlin scripts
+
+--
+
+REPL needs more work
+
+* [KT-11409](https://youtrack.jetbrains.com/issue/KT-11409) Add action "Send Selection To Kotlin Console"
+* [KT-12583](https://youtrack.jetbrains.com/issue/KT-12583) IDE REPL should run in project root directory
+* [KT-7100](https://youtrack.jetbrains.com/issue/KT-7100) REPL: allow adding a library to the classpath
+* [KT-14851](https://youtrack.jetbrains.com/issue/KT-14851) "this" is always defined in Kotlin REPL
+* [KT-21224](https://youtrack.jetbrains.com/issue/KT-21224 ) Incorrect alignment of commands and outputs in REPL
+
+--
+
+No graphics device
+
+--
+
+### Raise your voice and vote on https://youtrack.jetbrains.com !!
+
+???
+
+Make the world a better place by raising...
 
 
 ---
@@ -1124,33 +1238,30 @@ coming back to initial motivation.
  ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
 
 
-Data Science Stack
-
-* Render this presentation with the kotlin kernel
-* Fill missing-bits and pieces
-* Evolve report rendering approach into tool
-* Continue `kravis` for visualzation including a JVM DS plotting device
-
 
 ---
-## Summary
+class:  inverse
+
+# Summary
 
 
+###  `krangl` is a {K}otlin library for data w{rangl}ing. It allows to filter, transform, aggregate and reshape tabular data.
 
-### `krangl` tries to solve it using idomatic Kotlin patterns
 --
 
-### There's a fascinating edcosystem out there, ready to be unleashed on your data
+### There's a fascinating JVM data science ecosystem out there, ready to be unleashed on your data
+
+--
 
 ### Tooling is still evolving!
 
-### Vote in YT and raise your voice!
-
 --
 
-**Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
+#### **Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
 
 ???
+
+`krangl` tries to bring pandas/dplyr to Kotlin
 
 Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis &amp; [kscript](https://github.com/holgerbrandl/kscript)
 
