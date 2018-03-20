@@ -6,8 +6,10 @@ import krangl.*
 fun main(args: Array<String>) {
 
 
-//    groupingExample()
-    apiIssues()
+    //    groupingExample()
+//    tidyExamples()
+    jupyterExample()
+    //    apiIssues()
 
 }
 
@@ -26,7 +28,6 @@ private fun groupingExample() {
     // hidden
     val users = usersDF.rowsAs<User>()
     // hidden
-
 
 
     val groupBy: Map<Int, List<User>> = users.groupBy { it.age }
@@ -53,7 +54,7 @@ fun apiIssues() {
     // hidden
     val users = usersDF.rowsAs<User>()
 
-//    arrayOf(1,2,3)+4
+    //    arrayOf(1,2,3)+4
     dataFrameOf("user")(users).addColumn("age_plus_3") { it["user"].map<User> { it.age } + 3 }
 
     // works
@@ -62,9 +63,34 @@ fun apiIssues() {
 
     //
 
+    //    val mean:Double = usersDF["age"].mean2
+    //    val mean:Double = usersDF["age"].foo()
+}
 
-    val mean:Double = usersDF["age"].mean2
-    val mean:Double = usersDF["age"].foo()
+fun tidyExamples() {
+    dataFrameOf("user")("brandl,holger,38")
+        .apply { print() }
+        .separate("user", listOf("last_name", "first_name", "age"), convert = true)
+        .apply { print() }
+        .apply { glimpse() }
+
+}
+
+
+fun jupyterExample(){
+//    @file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
+//    @file:DependsOnMaven("de.mpicbg.scicomp:krangl:0.7")
+
+    irisData
+
+    irisData.glimpse()
+
+    val summarizeDf: DataFrame = irisData
+        .groupBy("Species")
+        .summarize("mean_petal_width") { it["Petal.Width"].mean() }
+
+    summarizeDf.print()
+
 }
 
 private fun DataCol.foo(): Double {

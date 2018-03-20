@@ -77,3 +77,14 @@
 .hljs-github .hljs-string, .hljs-github .hljs-doctag {
     color: #009e28;
 }
+
+
+/* from https://yihui.name/en/2017/08/why-xaringan-remark-js/ */
+.pull-left {
+    float: left;
+    width: 47%;
+}
+.pull-right {
+    float: right;
+    width: 47%;
+}

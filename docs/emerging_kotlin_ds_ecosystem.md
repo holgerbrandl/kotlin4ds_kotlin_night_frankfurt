@@ -265,9 +265,14 @@ https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-ma
 
 
 ---
-### Data model in `krangl`
+### Data model of `krangl`
+
 
 What is a DataFrame?
+
+> A "tabular"  data structure representing cases (rows), each of which consists of a number of observations or measurements (columns)
+
+
 ```kotlin
 interface DataFrame {
     val cols: List<DataCol>
@@ -276,8 +281,17 @@ interface DataFrame {
 abstract class DataCol(val name: String) {
     abstract fun values(): Array<*>
 }
-
 ```
+* Currently column implementations for `String?`, `Int?`, `Double?`, `Boolean?` and `Any?`
+* Internal length and type consistency checks (e.g. prevent duplicated column names)
+
+???
+
+Nullable types core concept of Kotlin !!
+
+time to check your phone now --> not needed to use krangl
+
+Def from https://github.com/mobileink/data.frame/wiki/What-is-a-Data-Frame%3F
 
 ---
 ### Get your data into krangl
@@ -327,7 +341,48 @@ background-size: 80%
 
 
 ---
+background-image: url(images/tidyr_cs_checked.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 80%
+
+---
+
+```kotlin
+wideDf.gather("year", "rainfall", columns = { except("country") AND startsWith("wind") } )
+```
+
+```kotlin
+dataFrameOf("user")("brandl,holger,37")
+        .apply { print() }
+        .separate("user", listOf("last_name", "first_name","age"), convert = true)
+        .apply { print() }
+        .apply { glimpse() }
+```
+
+```
+            user
+brandl,holger,37
+```
+```
+last_name   first_name   age
+   brandl       holger    37
+```
+```
+DataFrame with 1 observations
+last_name	: [Str]	, [brandl]
+first_name	: [Str]	, [holger]
+age	        : [Int]	, [37]
+```
+---
 background-image: url(images/data_trafo_1_cs.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 80%
+
+
+---
+background-image: url(images/data_trafo_1_cs_checked.png)
 background-position: center
 background-repeat: no-repeat
 background-size: 80%
@@ -339,6 +394,122 @@ background-repeat: no-repeat
 background-size: 80%
 
 ---
+background-image: url(images/data_trafo_2_cs_checked.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 80%
+
+
+---
+Examples
+
+```R
+
+// Create data-frame in memory
+val df: DataFrame = dataFrameOf(
+    "first_name", "last_name", "age", "weight")(
+    "Max", "Doe", 23, 55,
+    "Franz", "Smith", 23, 88,
+    "Horst", "Keanes", 12, 82
+)
+
+df.addColumn("salary_category") { 3 }
+
+// by doing basic column arithmetics
+df.addColumn("age_3y_later") { it["age"] + 3 }
+
+// Note: krangl dataframes are immutable so we need to (re)assign results to preserve changes.
+val newDF = df.addColumn("full_name") { it["first_name"] + " " + it["last_name"] }
+
+// Also feel free to mix types here since krangl overloads  arithmetic operators like + for dataframe-columns
+df.addColumn("user_id") { it["last_name"] + "_id" + rowNumber }
+
+// Create new attributes with string operations like matching, splitting or extraction.
+df.addColumn("with_anz") { it["first_name"].asStrings().map { it!!.contains("anz") } }
+
+// Note: krangl is using 'null' as missing value, and provides convenience methods to process non-NA bits
+df.addColumn("first_name_initial") { it["first_name"].map<String>{ it.first() } }
+
+// or add multiple columns at once
+df.addColumns(
+    "age_plus3" to { it["age"] + 3 },
+    "initials" to { it["first_name"].map<String> { it.first() } concat it["last_name"].map<String> { it.first() } }
+)
+```
+
+---
+
+```kotlin
+// Sort your data with sortedBy
+df.sortedBy("age")
+// and add secondary sorting attributes as varargs
+df.sortedBy("age", "weight")
+df.sortedByDescending("age")
+df.sortedBy { it["weight"].asInts() }
+
+
+// Subset columns with select
+df.select2 { it is IntCol } // functional style column selection
+df.select("last_name", "weight")    // positive selection
+df.remove("weight", "age")  // negative selection
+df.select({ endsWith("name") })    // selector mini-language
+
+```
+
+---
+```kotlin
+// Subset rows with vectorized filter
+df.filter { it["age"] eq 23 }
+df.filter { it["weight"] gt 50 }
+df.filter({ it["last_name"].isMatching { startsWith("Do")  }})
+
+// In case vectorized operations are not possible or available we can also filter tables by row
+// which allows for scalar operators
+df.filterByRow { it["age"] as Int > 5 }
+df.filterByRow { (it["age"] as Int).rem(10) == 0 } // round birthdays :-)
+
+```
+
+---
+
+```kotlin
+// Summarize
+
+// do simple cross tabulations
+df.count("age", "last_name")
+
+// ... or calculate single summary statistic
+df.summarize("mean_age" to { it["age"].mean(true) })
+
+// ... or multiple summary statistics
+df.summarize(
+    "min_age" to { it["age"].min() },
+    "max_age" to { it["age"].max() }
+)
+
+// for sake of r and python adoptability you can also use `=` here
+df.summarize(
+    "min_age" `=` { it["age"].min() },
+    "max_age" `=` { it["age"].max() }
+)
+
+```
+---
+
+```kotlin
+// Grouped operations
+val groupedDf: DataFrame = df.groupBy("age") // or provide multiple grouping attributes with varargs
+val sumDF = groupedDf.summarize(
+    "mean_weight" to { it["weight"].mean(removeNA = true) },
+    "num_persons" to { nrow }
+)
+
+// Optionally ungroup the data
+sumDF.ungroup().print()
+
+```
+
+---
 background-image: url(images/nested_data_cs.png)
 background-position: center
 background-repeat: no-repeat
@@ -346,8 +517,30 @@ background-size: 80%
 
 
 ---
+background-image: url(images/nested_data_cs_checked.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 80%
+
+
+---
+Examples
+
+```
+todo
+```
+
+---
 Typed data support
 
+manual approach
+```kotlin
+// to populate a data-frame with selected properties only, we can do
+val deparsedDF = records.deparseRecords { mapOf("age" to it.age, "weight" to it.mean_weight) }
+
+```
+
+Via reflection
 ```kotlin
 data class Person(val name:String, val address:String)
 val persons :List<Person> = ...
@@ -362,7 +555,12 @@ personsDF2.unwrap("person", keep=T)
 
 val personsRestored :Iterable<Person> = df
 
+// print data class schema for table
+personsDF.printDataClassSchema("sumDF")
+
 ```
+
+todo add output!
 
 ```kotlin
 
@@ -447,6 +645,80 @@ Notebook environments are extremly popular
 ---
 # **The** IDE
 
+---
+
+## ![](images/project_jupyter.png)
+
+.left-column60[
+> Open-source web application that allows you to create and share
+  documents that contain live code, equations, visualizations and narrative text.
+
+Pros
+* Fast prototyping
+* Literate Programming
+* Great Narrative
+* Shareable insights without build process
+
+Cons
+* Collaboration is tricky
+* Versioning and code reviews are hard
+* Webapp not a real IDE substitute -> JupyterLab
+]
+
+.right-column40[
+![](images/d2013656.png)
+
+]
+
+???
+
+Very popular framework that is "Super-Charging Data Science"
+
+
+
+https://www.quora.com/What-are-the-pros-and-cons-of-using-Python-Jupyter-versus-a-normal-Python-development-environment
+
+https://unidata.github.io/online-python-training/introduction.html
+
+---
+# Kotlin Notebooks?
+
+* A kernel provides programming language support in Jupyter. IPython is the default kernel. Additional kernels include R, Julia, and many more.
+
+Two competing kernels for Kotlin
+
+https://github.com/ligee/kotlin-jupyter
+
+* More established
+* Backed by JB
+* Friendly and responsive developer
+* Not really active
+
+https://github.com/twosigma/beakerx
+
+> a collection of JVM kernels and interactive widgets for plotting, tables, auto-translation, and other extensions to Jupyter Notebook.
+
+* Very active, fast progress
+* Not just a kernel
+
+???
+
+---
+
+![](images/kotlin_notebook_example.png)
+
+
+---
+## Report rendering
+
+* see https://deanattali.com/2015/03/24/knitrs-best-hidden-gem-spin/
+
+* R script with special annotations --> convert to Rmarkdown --> evaluate all cells using knitr --> convert to html using pandoc
+
+How to achieve this with Kotlin?
+
+
+
 
 ---
 ## BeakerX
@@ -508,6 +780,10 @@ dataFrame.summarize("mean_salary"){ it["salaray"].mean()}
 // extension property
 dataFrame.summarize("mean_salary"){ it["salaray"].mean}
 ```
+
+* operators can not be overridden for collections, that is vectorized `+`, `!`,  `&&` etc.
+```kotlin
+
 
 pro & con?
 
