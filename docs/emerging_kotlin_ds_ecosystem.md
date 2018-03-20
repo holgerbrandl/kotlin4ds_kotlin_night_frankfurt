@@ -1,5 +1,5 @@
 ---
-title: "The emerging Kotlin data-science ecosystem"
+title: "Kotlin's emerging data-science ecosystem"
 subtitle: "Building Data Science Workflows & Libraries with Kotlin"
 author: "Holger Brandl"
 date: "Kotlin Night Frankfurt, 21.3.2018"
