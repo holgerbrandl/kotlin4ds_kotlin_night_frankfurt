@@ -1,6 +1,10 @@
 @file:Suppress("RemoveRedundantBackticks")
 
 import krangl.*
+import org.apache.commons.math3.linear.MatrixUtils
+import org.apache.commons.math3.linear.RealMatrix
+import org.apache.commons.math3.stat.inference.TestUtils
+import org.apache.commons.math3.stat.regression.SimpleRegression
 import java.io.File
 import java.util.*
 
@@ -12,10 +16,12 @@ fun main(args: Array<String>) {
 
     //    groupingExample()
     //    tidyExamples()
-//    jupyterExample()
-//    reshapingExamples()
-//    typeSupport()
-    allTogether()
+    //    jupyterExample()
+    //    reshapingExamples()
+    //    typeSupport()
+    //    allTogether()
+    //    ttest()
+    linRegression()
     //    apiIssues()
 
 }
@@ -26,21 +32,21 @@ fun allTogether() {
         .select({ range("year", "day") }, { listOf("arr_delay", "dep_delay") })
         .summarize(
             "mean_arr_delay" `=` { it["arr_delay"].mean(removeNA = true) },
-            "mean_dep_delay" to  { it["dep_delay"].mean(removeNA = true) }
+            "mean_dep_delay" to { it["dep_delay"].mean(removeNA = true) }
         )
-        .filter { (it["mean_arr_delay"] gt  30)  OR  (it["mean_dep_delay"] gt  30) }
+        .filter { (it["mean_arr_delay"] gt 30) OR (it["mean_dep_delay"] gt 30) }
         .sortedBy("mean_arr_delay")
         .print()
 }
 
 fun typeSupport() {
-    data class Person(val name:String, val age:Int)
-    val persons :List<Person> = listOf(Person("Anna", 23), Person("Anna", 43))
+    data class Person(val name: String, val age: Int)
+
+    val persons: List<Person> = listOf(Person("Anna", 23), Person("Anna", 43))
 
     // convert collections into data-frames
     val personsDF: DataFrame = persons.asDataFrame()
     personsDF.print()
-
 
 
     // convert collections into data-frames
@@ -56,7 +62,7 @@ fun typeSupport() {
 
 
     // part 3
-//    irisData.printDataClassSchema("Iris")
+    //    irisData.printDataClassSchema("Iris")
 
 
 }
@@ -131,14 +137,14 @@ fun lambdaBasic() {
         if (condition) println(msg(Date()))
     }
 
-    lazyMsg(true, { "huhu"})
-    lazyMsg(true, { occurred ->"huhu + ${occurred}"})
+    lazyMsg(true, { "huhu" })
+    lazyMsg(true, { occurred -> "huhu + ${occurred}" })
 }
 
 fun addColumnDesign() {
     val df = dataFrameOf()()
 
-    df.addColumn("foo"){ it.df.filter { it["foo"] gt 3 } }
+    df.addColumn("foo") { it.df.filter { it["foo"] gt 3 } }
 }
 
 fun reshapingExamples() {
@@ -149,9 +155,7 @@ fun reshapingExamples() {
 
     climate.print()
 
-    climate.
-        gather("year", "rainfall", columns = { matches("[0-9]*")} ).
-        print()
+    climate.gather("year", "rainfall", columns = { matches("[0-9]*") }).print()
 }
 
 
@@ -181,12 +185,36 @@ private val DataCol.mean2: Double
     }
 
 
-data class Foo(val bar:String)
-infix operator fun Foo.compareTo(rightCol:Foo) = -1
-infix operator fun Foo.(rightCol:Foo) = -1
+data class Foo(val bar: String)
+
+infix operator fun Foo.compareTo(rightCol: Foo) = -1
+//infix operator fun Foo.(rightCol:Foo) = -1
 
 
-fun future(){
+fun future() {
     Foo("1") > Foo("2")
+
+}
+
+
+fun linRegression() {
+
+    val irisModel = irisData
+        .groupBy("Species")
+        .summarize("lm") {
+            val x = it["Sepal.Length"].asDoubles().filterNotNull().toDoubleArray()
+            val y = it["Sepal.Width"].asDoubles().filterNotNull().toDoubleArray()
+
+            val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
+            SimpleRegression().apply { addObservations(xTransposed, y) }
+
+        }.addColumns(
+            "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
+            "intercept" to { it["lm"].map<SimpleRegression> { it.intercept } }
+        )
+
+    irisModel.print()
+    irisModel.glimpse()
+
 
 }

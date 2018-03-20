@@ -14,3 +14,8 @@ We will walk through existing tooling to do data science with Kotlin (Jupyter, R
 
 *In diesem Vortrag werden die verschiedenen Scope-Functions der Kotlin Library vorgestellt, welche eindrucksvoll den Stellenwert von Funktionen* *in der Sprache generell demonstrieren. Im Nachhinein sollte ein grundlegender Überblick und vor allem das Verständnis über die Funktionsweise* *vorhanden sein. Jeder Zuhörer soll in die Lage versetzt werden, Entscheidungen über die Einsatzgebiete der verschiedenen Funktionen treffen zu können.*
 
+
+# Todo
+
+* fix `KotlinNightExamplesKt.linRegression`
+* implement `nest`/`unnest`

@@ -87,7 +87,7 @@ https://github.com/Kotlin/KEEP/blob/scripting/proposals/scripting-support.md
 
 
 ---
-background-image: url(images/kotlin_logo.jpg)
+ckground-image: url(images/kotlin_logo.jpg)
 background-position: center
 background-repeat: no-repeat
 background-size: 78%
@@ -253,6 +253,23 @@ dataFrame.addColumn("intial"){ it["user"].map<User>{ it.name.first() }}
 
 assess if it would by any fun to work with such an API!
 
+
+---
+# Follow the crowd?
+
+
+* [tablesaw](https://github.com/jtablesaw/tablesaw) which is (according to its authors) the _The simplest way to slice data in Java_
+* [kotliquery](https://github.com/seratch/kotliquery) is a handy database access library
+* [Scala DataTable](https://github.com/martincooper/scala-datatable): a lightweight, in-memory table structure written in Scala
+* [joinery](https://github.com/cardillo/joinery) implements data frames for Java
+* [paleo](https://github.com/netzwerg/paleo) which provides immutable Java 8 data frames with typed columns
+* [morpheus-core](https://github.com/zavtech/morpheus-core) which is a data science framework implementing an R-like data-frame for the JVM
+* [vectorz](https://github.com/mikera/vectorz) is a fast and flexible numerical library for Java featuring N-dimensional arrays
+* [koma](https://kyonifer.github.io/koma/) is a scientific computing library written in Kotlin
+* [termsql](https://github.com/tobimensch/termsql) converts text from a file or from stdin into SQL table using sqlite and query it instantly
+* [Dex : The Data Explorer](https://github.com/PatMartin/Dex) is a data visualization tool written capable of powerful ETL and reporting
+
+Great stuff, but not what we want!
 
 ---
 class: inverse
@@ -760,18 +777,23 @@ val persons :Iterable<Person> = df
 
 
 ---
-## Bumpy API corners
+# Bumpy API corners
 
 #### Lists in table formulas cause operator confusion
 
 ```kotlin
-// will just add 3 to list of objects
-users.addColumn("age_plus_3") { it["user"].map<User> { it.age } + 3 }
-// correct
-users.addColumn("age_plus_3") { it["user"].map<User> { it.age + 3 }  }
-// works because `DataCol.plus` can be defined
-users.addColumn("age_plus_3") { it["age"] + 3 }  }
+users.addColumn("age_plus_3") { it["user"].map<User> { it.age } + 3 } // extend list with 3
+users.addColumn("age_plus_3") { it["user"].map<User> { it.age + 3 } } // correct
+users.addColumn("age_plus_3") { it["age"] + 3 }   // works because `DataCol.plus` can be defined
 ```
+
+--
+#### Incomplete vectorization for operators
+
+Some (`+`, `-`, `*`, `!`) can be overridden for collections, but others cannot (e.g. all arithmetic and boolean comparison ops)
+
+No vectorization for `>`,  `&&` `==`, etc. in table forumlas → Use function calls or not so pretty `gt`, `AND`, `eq`, etc.
+
 
 --
 #### Receiver vs parameter functions vs properties
@@ -784,15 +806,6 @@ dataFrame.summarize("mean_salary") { it["salaray"].mean() }   // extension/membe
 dataFrame.summarize("mean_salary") { it["salaray"].mean }     // extension property
 ```
 
---
-#### Incomplete vectorization for operators
-
-Some (`+`, `-`, `*`, `!`) can be overridden for collections, but some cannot (e.g. all arithmetic and boolean comparison ops)
-
-* No vectorization for `>`,  `&&` `==`, etc.
-* Use function calls or not so pretty `gt`, `AND`, `eq`, etc.
-
-
 ???
 
 Don't overload `operator Any?.plus` --> Confusion
@@ -802,16 +815,34 @@ https://kotlinlang.org/docs/reference/operator-overloading.html
 ---
 ## Next steps with `krangl`
 
+Promising API, great learning experience.
+
+--
 
 Project still in flux towards a convenient and consistent API design
 
-* Use dedicated table formula result type to avoid runtime errors
+--
+
+* Use dedicated type for table formula results to avoid runtime errors
 * Better lambda receiver contexts
-* Performance (indicies, compressed columns, pluggable native backends)
-* `Sequence` vs `Iterable`
-* Parquet support
+* Performance (indicies, avoid list and array copies, compressed columns)
+* Pluggable backends like native or SQL
+* `Sequence` vs `Iterable`?
 * More bindings to other jvm data-science libraries
+* Date columns support
 * Better documentation & cheatsheets
+
+
+---
+class: middle, inverse
+
+### Outline
+
+### Ingredients for data science?
+### Table Wrangling
+# Beyond Tables
+### Data Visualization
+### Reporting & Notebooks
 
 
 ---
@@ -819,60 +850,174 @@ Project still in flux towards a convenient and consistent API design
 
 ### 90% of Data Science is *just* table integration!
 
+--
+
 But still we want to do
 
-* Data Visualization
-* Statistics
-* Regression & Classification
+### * Data Visualization
+### * Statistics
+### * Regression & Classification
 
 
-* https://github.com/thomasnield/kotlin-statistics
-* https://github.com/thomasnield/smile
+--
+Today, just pointers!
 
-
-https://github.com/thomasnield/kotlin-data-science-resources
+Great link collection: https://github.com/thomasnield/kotlin-data-science-resources
 
 
 ---
+background-image: url(images/ggplot_examples.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 95%
+
+
 # Data Visualization
 
-Still no coherent framework
+Many options
 
-JVM graphics device project?
+* [Vegas](https://github.com/vegas-viz/Vegas) Vega-lite wrapper, aims to be the missing MatPlotLib for Scala + Spark
+* [data2viz](https://github.com/data2viz/data2viz) is a multi platform data visualization library with comprehensive DSL
+* [XChart](https://github.com/timmolter/XChart) is a light-weight Java library for plotting data
+* [Kubed](https://github.com/hudsonb/kubed/) is a Kotlin library for manipulating the JavaFX scenegraph based on data.
+* [TornadoFX](https://github.com/edvin/tornadofx/wiki/Charts) provides some Kotlin wrappers around JavaFX
+* [Jzy3d](http://www.jzy3d.org/) is an open source java library that allows to easily draw 3d #surfaces, scatter plots, bar charts
+* [plotly-scala](https://github.com/alexarchambault/plotly-scala) which provides scala bindings for plotly.js and works within jupyter
+* [grafana](https://grafana.com/) is an open platform for beautiful analytics and monitoring
+
+--
+
+#### Still no coherent `ggplot2` like framework.
+
+--
+
+#### Needed: JVM graphics device project that works from Kotlin REPL, in Intellij, and in jupyter notebooks
 
 
 ---
-# Regression & Classification
+# `kravis` - https://github.com/holgerbrandl/kravis
 
-https://github.com/haifengl/smile
+Early pre-alpha!! :-)
+
+`kravis` implements a grammar to create a wide range of plots using a standardized set of verbs.
+
+It implements a Kotlin DSL wrapper around [vega-lite](https://vega.github.io/vega-lite/):
+
+
+.left-column60[
+
+```kotlin
+import krangl.*
+import kravis.*
+
+val movies = DataFrame.fromJson("movies.json")
+
+plotOf(movies) {  mark = Mark(circle)
+ 
+ encoding(x,"IMDB_Rating",binParams=BinParams(10))
+ encoding(y, "Rotten_Tomatoes_Rating", bin = true)
+ encoding(size, aggregate = Aggregate.count)
+}
+```
+
+]
+
+.right-column40[
+![](images/kravis_plot.png)
+]
+
+---
+# krangl + smile + kravis
+
+
+```kotlin
+val irisArray = irisData.remove("Species").toArray()
+
+val pca = smile.projection.PCA(irisArray)
+
+//barchart
+plotOf(pca.varianceProportion.toList()) {
+    encoding(x) { this }
+}.render()
+
+
+val projection = pca.setProjection(2).projection
+
+// PC1 vs PC2 scatter
+plotOf(projection.transpose().array().withIndex()) {
+    mark(MarkType.point)
+    encoding(x) { value[0] }
+    encoding(y) { value[1] }
+    encoding(text){ "PC"+index}
+}.render()
+```
+
+
+---
+# Regression & Classification: https://github.com/haifengl/smile
+
+* **Classification** Support Vector Machines, Decision Trees, AdaBoost, Gradient Boosting, Random Forest, Logistic Regression, Neural Networks, RBF Networks, Maximum Entropy Classifier, KNN, Naïve Bayesian, Fisher/Linear/Quadratic/Regularized Discriminant Analysis.
+
+* **Regression** Support Vector Regression, Gaussian Process, Regression Trees, Gradient Boosting, Random Forest, RBF Networks, OLS, LASSO, Ridge Regression.
+
+* **Feature Selection** Genetic Algorithm based Feature Selection, Ensemble Learning based Feature Selection, Signal Noise ratio, Sum Squares ratio.
+
+* **Clustering** BIRCH, CLARANS, DBScan, DENCLUE, Deterministic Annealing, K-Means, X-Means, G-Means, Neural Gas, Growing Neural Gas, Hierarchical Clustering, Sequential Information Bottleneck, Self-Organizing Maps, Spectral Clustering, Minimum Entropy Clustering.
+
+* **Manifold learning** IsoMap, LLE, Laplacian Eigenmap, t-SNE, PCA, Kernel PCA, Probabilistic PCA, GHA, Random Projection, MDS
+
+* **Nearest Neighbor Search** BK-Tree, Cover Tree, KD-Tree, LSH.
+
+* **Sequence Learning** Hidden Markov Model, Conditional Random Field.
+
+* **Natural Language Processing** Tokenizer, Keyword Extractor, Stemmer, POS Tagging, Relevance Ranking
+
+???
+
 
 https://deeplearning4j.org/
+
+kotlin examples
+
+https://github.com/deeplearning4j/dl4j-examples/blob/master/dl4j-examples/src/main/kotlin/org/deeplearning4j/examples/feedforward/mnist/MLPMnistSingleLayerExample.kt
+
 
 ---
 # Statistics
 
-Example: How to perform a t-test?
+http://commons.apache.org/proper/commons-math/
 
+https://github.com/chen0040/java-glm
+
+Example: How to perform a fit linear regression model per group?
+
+```kotlin
+val irisModel = irisData
+    .groupBy("Species")
+    .summarize("lm") {
+        val x = it["Sepal.Length"].asDoubles().filterNotNull().toDoubleArray()
+        val y = it["Sepal.Width"].asDoubles().filterNotNull().toDoubleArray()
+
+        val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
+        SimpleRegression().apply { addObservations(xTransposed, y) }
+
+    }.addColumns(
+        "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
+        "intercept" to { it["lm"].map<SimpleRegression> { it. } }
+    )
+
+```
 
 ---
-# Example: How to do a PCA?
+class: middle, inverse
 
+### Outline
 
----
-# Example: How to fit a simple regression model?
-
-
-Data Science Ecosystem
-
-* https://github.com/kyonifer/koma
-* Deeplearning4j
-
-
-???
-
-also see http://scikit-learn.org/stable/modules/linear_model.html
-
-https://github.com/thomasnield/kotlin-statistics#linear-regression
+### Ingredients for data science?
+### Table Wrangling
+### Beyond Tables
+### Data Visualization
+# Reporting & Notebooks
 
 
 ---
@@ -921,7 +1066,7 @@ https://github.com/ligee/kotlin-jupyter
 
 * More established
 * Backed by JB
-* Friendly and responsive developer
+* Friendly and responsive developers
 * Not really active
 
 https://github.com/twosigma/beakerx
@@ -929,7 +1074,9 @@ https://github.com/twosigma/beakerx
 > a collection of JVM kernels and interactive widgets for plotting, tables, auto-translation, and other extensions to Jupyter Notebook.
 
 * Very active, fast progress
-* Not just a kernel
+* Friendly and very responsive developers
+* Not __just__ a kernel
+* Display handler registry in kernel `krangl.beakerx.TableDisplayer.register()`
 
 ???
 
@@ -949,12 +1096,12 @@ beakerx: adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/maste
 
 How to achieve this with Kotlin?
 
+Data Science Stack
 
----
-## What else?
-
-* https://github.com/jtablesaw/tablesaw
-* https://github.com/kyonifer/koma
+* Render this presentation with the kotlin kernel
+* Fill missing-bits and pieces
+* Evolve report rendering approach into tool
+* Continue `kravis` for visualzation including a JVM DS plotting device
 
 
 
@@ -968,6 +1115,9 @@ Python --> [Spyder](https://github.com/spyder-ide/spyder) or pycharm
 
 kernel is there but not yet fun
 
+--
+
+### Vote in YT and raise your voice!
 
 ---
 ## What's still missing in Kotlin to rule data-science?
@@ -983,33 +1133,28 @@ coming back to initial motivation.
  ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
 
 
-Data Science Stack
-
-* Render this presentation with the kotlin kernel
-* Fill missing-bits and pieces
-* Evolve report rendering approach into tool
-* Continue `kravis` for visualzation including a JVM DS plotting device
-
 
 ---
 ## Summary
 
 
+###  `krangl` is a {K}otlin library for data w{rangl}ing. It allows to filter, transform, aggregate and reshape tabular data.
 
-### `krangl` tries to solve it using idomatic Kotlin patterns
 --
 
-### There's a fascinating edcosystem out there, ready to be unleashed on your data
+### There's a fascinating JVM data science ecosystem out there, ready to be unleashed on your data
+
+--
 
 ### Tooling is still evolving!
 
-### Vote in YT and raise your voice!
-
 --
 
-**Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
+#### **Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
 
 ???
+
+`krangl` tries to bring pandas/dplyr to Kotlin
 
 Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis & [kscript](https://github.com/holgerbrandl/kscript)
 
