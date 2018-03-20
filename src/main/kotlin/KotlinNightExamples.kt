@@ -1,4 +1,5 @@
 import krangl.*
+import java.util.*
 
 /**
  * @author Holger Brandl
@@ -7,8 +8,9 @@ fun main(args: Array<String>) {
 
 
     //    groupingExample()
-//    tidyExamples()
-    jupyterExample()
+    //    tidyExamples()
+//    jupyterExample()
+    reshapingExamples()
     //    apiIssues()
 
 }
@@ -77,9 +79,38 @@ fun tidyExamples() {
 }
 
 
-fun jupyterExample(){
-//    @file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
-//    @file:DependsOnMaven("de.mpicbg.scicomp:krangl:0.7")
+fun lambdaBasic() {
+    fun lazyMsg(condition: Boolean, msg: (Date) -> String) {
+        if (condition) println(msg(Date()))
+    }
+
+    lazyMsg(true, { "huhu"})
+    lazyMsg(true, { occurred ->"huhu + ${occurred}"})
+}
+
+fun addColumnDesign() {
+    val df = dataFrameOf()()
+
+    df.addColumn("foo"){ it.df.filter { it["foo"] gt 3 } }
+}
+
+fun reshapingExamples() {
+    val climate = dataFrameOf(
+        "city", "coast_distance", "1995", "2000", "2005")(
+        "Dresden", 400, 343, 252, 423,
+        "Frankfurt", 534, 534, 435, 913)
+
+    climate.print()
+
+    climate.
+        gather("year", "rainfall", columns = { matches("[0-9]*")} ).
+        print()
+}
+
+
+fun jupyterExample() {
+    //    @file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
+    //    @file:DependsOnMaven("de.mpicbg.scicomp:krangl:0.7")
 
     irisData
 

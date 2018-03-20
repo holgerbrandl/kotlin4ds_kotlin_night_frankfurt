@@ -10,10 +10,10 @@ import krangl.*
 
 
 
-//' the input data
+//' The first records ininput data which is bundled with krangl is
 irisData
 
-//' structur of the input data
+//' The structure of the input data is
 irisData.glimpse()
 
 //' Calculate mean petal width

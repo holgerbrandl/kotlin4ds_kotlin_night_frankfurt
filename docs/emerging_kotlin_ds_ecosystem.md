@@ -1,6 +1,6 @@
 ---
 title: "The emerging Kotlin data-science ecosystem"
-subtitle: ""
+subtitle: "Building Data Science Workflows & Libraries with Kotlin"
 author: "Holger Brandl"
 date: "Kotlin Night Frankfurt, 21.3.2018"
 output:
@@ -14,8 +14,12 @@ output:
       countIncrementalSlides: false
 ---
 
-class: middle, inverse
+background-image: url(images/gdg_first_slide.png)
+background-position: center
+background-size: 100%
 
+---
+class: middle, inverse
 
 <!-- ## Outline -->
 # Outline
@@ -37,6 +41,7 @@ class: middle, inverse
 ### Beyond Tables
 ### Data Visualization
 ### Reporting & Notebooks
+
 
 ---
 # The data-science life cycle
@@ -210,30 +215,28 @@ staff %>%
 correlation via: https://github.com/drsimonj/corrr
 
 ---
-# Mix types and untyped data in single API
+# Wanted: Mix typed and untyped data
 
 `val dataFrame : DataFrame =`
 
 | `employee:Employee` | `sales:List<Sale>` | `age:Int` | `address:String` | `salary:Double`   |
 |:-----|:-------------|:----|:-----|:--|
-| `Employee(23, "max")` |    `listOf(Sale(), Sale(...)` |   23  | "Frankfurt"     |  50.3E3 |
-| ... |      |     |      |   |
+| `Employee(23, "Max")` |    `listOf(Sale(...), Sale())` |   23  | "Frankfurt"     |  50.3E3 |
+| ... |  ...    | ...    |  ...    | ...  |
 
 ```kotlin
-// aggregation
+// aggregations like
 dataFrame.groupBy("age").count()
 dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
 
-// integration
+// integration like
 val df: DataFrame = dataFrame.leftJoin(otherDF)
 
-// transformation
+// transformations like
 dataFrame.addColumn("intial"){ it["user"].map<User>{ it.name.first() }}
-
-// ...
 ```
 
-`+` `pandas`/`tidyverse` like API to create, manipulate, reshape, combine and summarize with these data frames
+`+` `pandas`/`tidyverse` like API to create, manipulate, reshape, combine and summarize  data frames
 `+` methods to go back and forth between untyped and typed data
 
 
@@ -265,7 +268,7 @@ https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-ma
 
 
 ---
-### Data model of `krangl`
+# Data model of `krangl`
 
 
 What is a DataFrame?
@@ -294,7 +297,7 @@ time to check your phone now --> not needed to use krangl
 Def from https://github.com/mobileink/data.frame/wiki/What-is-a-Data-Frame%3F
 
 ---
-### Get your data into krangl
+# Get your data into krangl
 
 
 Read from tsv, csv, json, jdbc, e.g.
@@ -321,17 +324,105 @@ val personsDF: DataFrame = persons.asDataFrame()
 ```
 
 
+---
+# Kotlin Basics Revisited: Function arguments
+
+A _lambda expression_ or an anonymous function is a "function literal", i.e. a function that is not declared, but passed immediately as an expression.
+
+```kotlin
+fun lazyMsg(condition: Boolean, msg: (Date) -> String) {
+    if (condition) println(msg(Date()))
+}
+
+lazyMsg(true, { "huhu"})
+lazyMsg(true, { occurred ->"huhu + ${occurred}"})
+```
+
+--
+
+If a function literal has only one parameter, its declaration may be omitted and its name will be `it`:
+
+```kotlin
+lazyMsg(true){ "huhu ${it}"}
+```
+
+--
+
+If the last parameter to a function is a function, and you're passing a lambda expression as the corresponding argument, you can specify it outside of parentheses:
+
+```kotlin
+lazyMsg(true){ "huhu ${it}" }
+```
+
+???
+
+`msg` is supposed to be a function that takes a `Date` argument and returns a value of type `String`.
+
+`it`: implicit name of a single parameter
+
+
+
+For full details see  https://kotlinlang.org/docs/reference/lambdas.html
 
 ---
-## What do we need?
+## Pimp your API with type aliases + extensions + operator overloading
 
-* Learn from the best! `tidyverse`
-* Condensed into amazing cheatsheets by rstudio on https://www.rstudio.com/resources/cheatsheets/
+Envisioned user API for `krangl`
+```kotlin
+val newDf   = staff.addColumn("age_plus_3") { it["age"] + 3 }
+val otherDF = staff.addColumn("row_number") { nrow }
+```
+
+--
+
+Behind the scenes
+```kotlin
+fun DataFrame.addColumn(columnName: String, expression: TableExpression): DataFrame = 
+    addColumn(ColumnFormula(columnName, expression))
+
+typealias TableExpression = ExpressionContext.(ExpressionContext) -> Any?
+
+class ExpressionContext(val df: DataFrame) {
+    operator fun get(name: String): DataCol = df[name]
+
+    val nrow = df.nrow
+}
+```
+
+* `it` in examples is instance of `ExpressionContext` proxying the `df`
+* Allows to refer with `it` and `this` to expression context
+
+
+???
+
+user perspective `it` is the df, but it is actually not. Just the relevant bits of it
+
+---
+# Receivers in function literals provide scope control
+
+Context specific for completion in IDE
+
+![](images/select_completion.png)
+
+---
+## How to build a data-frame API?
+
+`readCSV`, `addColum`, what else do we need?
+
+.pull-left[
+* Learn from the best! Learn from the **[`tidyverse`](https://www.tidyverse.org/)**
+
+* Supported and condensed into amazing [cheatsheets](https://www.rstudio.com/resources/cheatsheets/) by [rstudio](https://www.rstudio.com/)
 
 Major APIs
-* Data Prep
-* Data Manipulation
-* List Columns
+* `tibble` - Data structures
+* `tidyr`  -  Data preparation
+* `dplyr`  -  Data manipulation
+* `purrr`  -  List Columns
+]
+.pull-right[
+![](images/tidyverse.png)
+]
 
 ---
 background-image: url(images/tidyr_cs.png)
@@ -348,9 +439,37 @@ background-size: 80%
 
 ---
 
+# Example: Data Reshaping with `krangl`
+
 ```kotlin
-wideDf.gather("year", "rainfall", columns = { except("country") AND startsWith("wind") } )
+val climate = dataFrameOf(
+        "city", "coast_distance", "1995", "2000", "2005")(
+        "Dresden", 400, 343, 252, 423,
+        "Frankfurt", 534, 534, 435, 913)
 ```
+
+```
+     city   coast_distance   1995   2000   2005
+  Dresden              400    343    252    423
+Frankfurt              534    534    435    913
+```
+
+```kotlin
+climate. gather("year", "rainfall", columns = { matches("[0-9]*")} )
+```
+
+```
+     city   coast_distance   year   rainfall
+  Dresden              400   1995        343
+Frankfurt              534   1995        534
+  Dresden              400   2000        252
+Frankfurt              534   2000        435
+  Dresden              400   2005        423
+Frankfurt              534   2005        913
+```
+
+---
+# Example: Data Ingestion with `krangl`
 
 ```kotlin
 dataFrameOf("user")("brandl,holger,37")
@@ -364,31 +483,21 @@ dataFrameOf("user")("brandl,holger,37")
             user
 brandl,holger,37
 ```
+-----
 ```
 last_name   first_name   age
    brandl       holger    37
 ```
+-----
 ```
 DataFrame with 1 observations
-last_name	: [Str]	, [brandl]
-first_name	: [Str]	, [holger]
-age	        : [Int]	, [37]
+last_name  : [Str]	, [brandl]
+first_name : [Str]	, [holger]
+age        : [Int]	, [37]
 ```
----
-background-image: url(images/data_trafo_1_cs.png)
-background-position: center
-background-repeat: no-repeat
-background-size: 80%
-
 
 ---
 background-image: url(images/data_trafo_1_cs_checked.png)
-background-position: center
-background-repeat: no-repeat
-background-size: 80%
-
----
-background-image: url(images/data_trafo_2_cs.png)
 background-position: center
 background-repeat: no-repeat
 background-size: 80%
@@ -401,62 +510,84 @@ background-size: 80%
 
 
 ---
-Examples
+background-image: url(images/nested_data_cs_checked.png)
+background-position: center
+background-repeat: no-repeat
+background-size: 80%
 
-```R
 
-// Create data-frame in memory
+---
+# Add columns with `addColumn`
+
+```kotlin
 val df: DataFrame = dataFrameOf(
     "first_name", "last_name", "age", "weight")(
     "Max", "Doe", 23, 55,
     "Franz", "Smith", 23, 88,
-    "Horst", "Keanes", 12, 82
-)
+    "Horst", "Keanes", 12, 82)
 
-df.addColumn("salary_category") { 3 }
+df.addColumn("salary_category") { 3 }             // add constants
+df.addColumn("age_3y_later") { it["age"] + 3 }    // do basic column arithmetics
 
-// by doing basic column arithmetics
-df.addColumn("age_3y_later") { it["age"] + 3 }
-
-// Note: krangl dataframes are immutable so we need to (re)assign results to preserve changes.
+// krangl dataframes are immutable so we need to (re)assign results to preserve changes.
 val newDF = df.addColumn("full_name") { it["first_name"] + " " + it["last_name"] }
 
-// Also feel free to mix types here since krangl overloads  arithmetic operators like + for dataframe-columns
+// krangl overloads  arithmetic operators like + for dataframe-columns
 df.addColumn("user_id") { it["last_name"] + "_id" + rowNumber }
 
-// Create new attributes with string operations like matching, splitting or extraction.
-df.addColumn("with_anz") { it["first_name"].asStrings().map { it!!.contains("anz") } }
-
-// Note: krangl is using 'null' as missing value, and provides convenience methods to process non-NA bits
+//and provides convenience methods to ignore NAs
 df.addColumn("first_name_initial") { it["first_name"].map<String>{ it.first() } }
 
 // or add multiple columns at once
 df.addColumns(
     "age_plus3" to { it["age"] + 3 },
-    "initials" to { it["first_name"].map<String> { it.first() } concat it["last_name"].map<String> { it.first() } }
+    "initial" to { it["first_name"].map<String> { it.first() } }
 )
 ```
 
 ---
+# Get your data in order `sortedBy`
 
 ```kotlin
-// Sort your data with sortedBy
 df.sortedBy("age")
+
 // and add secondary sorting attributes as varargs
 df.sortedBy("age", "weight")
+
+// reverse sorting order
 df.sortedByDescending("age")
+df.sortedBy{ desc("age") }
+
+// sort descending by age, and resolve ties by weight
+df.sortedBy({ desc(it["age"]) }, { it["weight"] })
+
+
+// sort with indicator lambda
 df.sortedBy { it["weight"].asInts() }
-
-
-// Subset columns with select
-df.select2 { it is IntCol } // functional style column selection
-df.select("last_name", "weight")    // positive selection
-df.remove("weight", "age")  // negative selection
-df.select({ endsWith("name") })    // selector mini-language
-
 ```
 
 ---
+# Subset columns with `select`
+
+```kotlin
+// positive selection
+df.select("last_name", "weight")    
+
+// negative selection
+df.remove("weight", "age")  
+
+// selector mini-language
+df.select({ endsWith("name") })   
+df.select({ matches("foo[0-9") })
+
+// functional style column selection
+// odd name to avoid JVM signature clash (help welcome!)
+df.select2 { it is IntCol } 
+```
+
+---
+# Subset your records with `filter`
+
 ```kotlin
 // Subset rows with vectorized filter
 df.filter { it["age"] eq 23 }
@@ -471,10 +602,9 @@ df.filterByRow { (it["age"] as Int).rem(10) == 0 } // round birthdays :-)
 ```
 
 ---
+# Summarize your data with `summarize`
 
 ```kotlin
-// Summarize
-
 // do simple cross tabulations
 df.count("age", "last_name")
 
@@ -492,46 +622,26 @@ df.summarize(
     "min_age" `=` { it["age"].min() },
     "max_age" `=` { it["age"].max() }
 )
-
 ```
 ---
+# Perform grouped operations after `groupBy`
+
 
 ```kotlin
-// Grouped operations
-val groupedDf: DataFrame = df.groupBy("age") // or provide multiple grouping attributes with varargs
+val groupedDf: DataFrame = df.groupBy("age") 
+// ... or provide multiple grouping attributes with varargs
+
 val sumDF = groupedDf.summarize(
     "mean_weight" to { it["weight"].mean(removeNA = true) },
     "num_persons" to { nrow }
 )
 
 // Optionally ungroup the data
-sumDF.ungroup().print()
-
+sumDF.ungroup()
 ```
 
 ---
-background-image: url(images/nested_data_cs.png)
-background-position: center
-background-repeat: no-repeat
-background-size: 80%
-
-
----
-background-image: url(images/nested_data_cs_checked.png)
-background-position: center
-background-repeat: no-repeat
-background-size: 80%
-
-
----
-Examples
-
-```
-todo
-```
-
----
-Typed data support
+# Typed data revisited
 
 manual approach
 ```kotlin
@@ -783,50 +893,17 @@ dataFrame.summarize("mean_salary"){ it["salaray"].mean}
 
 * operators can not be overridden for collections, that is vectorized `+`, `!`,  `&&` etc.
 ```kotlin
-
+```
 
 pro & con?
 
 
 ---
-## API design fun: type aliases + extensions + operator overloading
-
-User side:
-```kotlin
-staff.addColumn("age_plus_3") { it["age"] + 3 }
-```
-
-Backbone:
-```kotlin
-fun DataFrame.addColumn(columnName: String, expression: TableExpression): DataFrame = 
-    addColumn(ColumnFormula(columnName, expression))
-//...
-typealias TableExpression = ExpressionContext.(ExpressionContext) -> Any?
-//...
-class ExpressionContext(val df: DataFrame) {
-    operator fun get(name: String): DataCol = df[name]
-
-    val rowNumber: List<Int> get() = (1..df.nrow).toList()
-
-    val nrow = df.nrow
-}
-
-```
-
-`it` in examples is instance `ExpressionContext` proxying the `df`.
-
-`Foo.(Foo)`: Allows to refer with `it` and `this` to expression context:
-```kotlin
-staff.addColumn("row_number") { nrow }
-staff.addColumn("intital") { it["name"].map<String>{ it.first()} }
-
-```
-
----
 ## Next steps
 
 
-Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis & [kscript](https://github.com/holgerbrandl/kscript)
+`krangl`
+* Group by selector function `df.groupBy{ it["name"].startsWith("F") }`
 * Performance (indcies, compressed columns)
 * Parquet support
 * Allow to pluggable backends
@@ -852,3 +929,17 @@ Keep working with github community on [krangl](https://github.com/holgerbrandl/k
 ### Tooling is still evolving!
 
 ### Vote in YT and raise your voice!
+
+--
+
+**Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
+
+???
+
+Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis & [kscript](https://github.com/holgerbrandl/kscript)
+
+
+---
+Figure References
+
+* https://www.rstudio.com/
