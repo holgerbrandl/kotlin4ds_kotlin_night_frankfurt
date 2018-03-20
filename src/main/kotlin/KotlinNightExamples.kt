@@ -1,4 +1,7 @@
+@file:Suppress("RemoveRedundantBackticks")
+
 import krangl.*
+import java.io.File
 import java.util.*
 
 /**
@@ -10,8 +13,51 @@ fun main(args: Array<String>) {
     //    groupingExample()
     //    tidyExamples()
 //    jupyterExample()
-    reshapingExamples()
+//    reshapingExamples()
+//    typeSupport()
+    allTogether()
     //    apiIssues()
+
+}
+
+fun allTogether() {
+    flightsData
+        .groupBy("year", "month", "day")
+        .select({ range("year", "day") }, { listOf("arr_delay", "dep_delay") })
+        .summarize(
+            "mean_arr_delay" `=` { it["arr_delay"].mean(removeNA = true) },
+            "mean_dep_delay" to  { it["dep_delay"].mean(removeNA = true) }
+        )
+        .filter { (it["mean_arr_delay"] gt  30)  OR  (it["mean_dep_delay"] gt  30) }
+        .sortedBy("mean_arr_delay")
+        .print()
+}
+
+fun typeSupport() {
+    data class Person(val name:String, val age:Int)
+    val persons :List<Person> = listOf(Person("Anna", 23), Person("Anna", 43))
+
+    // convert collections into data-frames
+    val personsDF: DataFrame = persons.asDataFrame()
+    personsDF.print()
+
+
+
+    // convert collections into data-frames
+    val personsDF2: DataFrame = dataFrameOf("person")(persons)
+    print(personsDF2)
+    personsDF2.glimpse()
+
+    //    personsDF2.unwrap("person", keep=T)
+
+    //    val personsRestored :Iterable<Person> = df
+
+    // print data class schema for table
+
+
+    // part 3
+//    irisData.printDataClassSchema("Iris")
+
 
 }
 
@@ -19,6 +65,7 @@ data class User(val firstName: String?, val lastName: String, val age: Int, val 
 
 
 private fun groupingExample() {
+    File(".").readBytes()
     val usersDF = dataFrameOf(
         "firstName", "lastName", "age", "hasSudo")(
         "max", "smith", 53, false,
@@ -36,7 +83,7 @@ private fun groupingExample() {
     groupBy.map { it.value.size } // #  users with same age
 
     // https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-grouping/
-    val groupingBy = users.groupingBy { it.age }
+    val groupingBy: Grouping<User, Int> = users.groupingBy { it.age }
     groupingBy.eachCount()
 
     val complexGrouping = users.groupingBy { listOf(it.age, it.hasSudo) }
@@ -132,3 +179,14 @@ private val DataCol.mean2: Double
     get() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+
+data class Foo(val bar:String)
+infix operator fun Foo.compareTo(rightCol:Foo) = -1
+infix operator fun Foo.(rightCol:Foo) = -1
+
+
+fun future(){
+    Foo("1") > Foo("2")
+
+}

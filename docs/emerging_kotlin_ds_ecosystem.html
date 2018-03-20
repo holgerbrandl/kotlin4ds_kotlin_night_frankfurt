@@ -96,7 +96,7 @@ https://github.com/Kotlin/KEEP/blob/scripting/proposals/scripting-support.md
 background-image: url(images/kotlin_logo.jpg)
 background-position: center
 background-repeat: no-repeat
-background-size: 80%
+background-size: 78%
 
 # Since February 2016
 
@@ -166,46 +166,52 @@ So can we?
 
 
 ---
-## Use what's out there! == more time for the gym!
+## Use the Kotlin stdlib and spent more time in the gym!?
 
-Use data classes and go with the stdlib:
+* `map`, `fold`, `filter`, `reduce` are cool and fun
+* Useful IO utilities like `File.readLines()`
+* Great string manipulation helpers
+* Great collection API
+* Grouping API
+
 ```kotlin
 data class User(val firstName: String?, val lastName: String, 
                 val age: Int, val hasSudo: Boolean?)
 
-val users = users.rowsAs&lt;User&gt;()
+val users = listOf(User(...), ...)
 
-val groupBy: Map&lt;Int, List&lt;User&gt;&gt; = users.groupBy { it.age }
-groupBy.map { it.value.size } // #  users with same age 
+val groupingBy : Grouping&lt;User, Int&gt; = users.groupingBy { it.age }
 
-// https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-grouping/
-val groupingBy = users.groupingBy { it.age }
 groupingBy.eachCount()
 
-val complexGrouping = users.groupingBy { listOf(it.age, it.hasSudo) }
-complexGrouping.eachCount()
+users.groupingBy { listOf(it.age, it.hasSudo) }.map{  ... }.fold{ ... }
 ```
 
 More advanced slicing possible with https://github.com/thomasnield/kotlin-statistics
 
-Does not seem enough to be fun!
+Not enough to implement DS life cycle!
+
+???
+
+for details see https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-grouping/
+
 
 ---
 ## To type or not to type?
 
-* Types are cool, but most data has no type
+* _Static types_ are cool, but most data has no type
 * It's more robust/fun to use types and they allow for better design
 * Many data attributes are very fluent
 
 ```kotlin
 data class Employee(val id:Int, val name:String) 
-val staffStats = listOf(Employee("John"), Employee("Anna"))  
+val staffStats = listOf(Employee(1, "John"), Employee(2, "Anna"))  
     ... predictNumSickDays()     // new type!
     ... addPerformanceMetrics()  // new type!
     ... addSalaries()            // new type!
     ... correlationAnalysis()    // odd generic signature :-|
 ```
-* R/python lack strict typing, and make such workflows fun to write
+* R/python lack static typing, which make such workflows more fluent/fun to write
 
 ```r
 staff %&gt;% 
@@ -371,7 +377,7 @@ lazyMsg(true){ "huhu ${it}" }
 For full details see  https://kotlinlang.org/docs/reference/lambdas.html
 
 ---
-## Pimp your API with type aliases + extensions + operator overloading
+## Build an API with type aliases + extensions + lambdas
 
 Envisioned user API for `krangl`
 ```kotlin
@@ -414,6 +420,7 @@ Context specific for completion in IDE
 ## How to build a data-frame API?
 
 `readCSV`, `addColum`, what else do we need?
+--
 
 .pull-left[
 * Learn from the best! Learn from the **[`tidyverse`](https://www.tidyverse.org/)**
@@ -426,22 +433,18 @@ Major APIs
 * `dplyr`  -  Data manipulation
 * `purrr`  -  List Columns
 ]
+
+--
+
 .pull-right[
 ![](images/tidyverse.png)
 ]
 
 ---
-background-image: url(images/tidyr_cs.png)
-background-position: center
-background-repeat: no-repeat
-background-size: 80%
-
-
----
 background-image: url(images/tidyr_cs_checked.png)
 background-position: center
 background-repeat: no-repeat
-background-size: 80%
+background-size: 78%
 
 ---
 
@@ -506,20 +509,20 @@ age        : [Int]	, [37]
 background-image: url(images/data_trafo_1_cs_checked.png)
 background-position: center
 background-repeat: no-repeat
-background-size: 80%
+background-size: 78%
 
 ---
 background-image: url(images/data_trafo_2_cs_checked.png)
 background-position: center
 background-repeat: no-repeat
-background-size: 80%
+background-size: 78%
 
 
 ---
 background-image: url(images/nested_data_cs_checked.png)
 background-position: center
 background-repeat: no-repeat
-background-size: 80%
+background-size: 78%
 
 
 ---
@@ -646,35 +649,108 @@ val sumDF = groupedDf.summarize(
 sumDF.ungroup()
 ```
 
----
-# Typed data revisited
 
-manual approach
+---
+# Bring it all together
+
 ```kotlin
-// to populate a data-frame with selected properties only, we can do
-val deparsedDF = records.deparseRecords { mapOf("age" to it.age, "weight" to it.mean_weight) }
+flightsData
+    .groupBy("year", "month", "day")
+    .select({ range("year", "day") }, { listOf("arr_delay", "dep_delay") })
+    .summarize(
+        "mean_arr_delay" `=` { it["arr_delay"].mean(removeNA = true) },
+        "mean_dep_delay" to  { it["dep_delay"].mean(removeNA = true) }
+    )
+    .filter { (it["mean_arr_delay"] gt  30)  OR  (it["mean_dep_delay"] gt  30) }
+    .sortedBy("mean_arr_delay")
+```
+
+```
+year   month   day       mean_arr_delay       mean_dep_delay
+2013      10    11              18.9229              31.2318
+2013       5    24              24.2574              30.3407
+2013       6     2               26.075              34.0133
+2013       6    26              27.3174             30.61175
+2013       6    10              28.0222             30.61945
+2013       7     8              29.6488              37.2966
+2013       8    22              29.9767              33.6004
+2013       2    27               31.252              37.7632
+
+```
+---
+# Type support - Part 1: Digest objects into attribute columns
+
+Cherry-pick properties with `Iterable&lt;T&gt;.deparseRecords`
+```kotlin
+val deparsedDF = records.deparseRecords { mapOf(
+    "age" to it.age, 
+    "weight" to it.mean_weight
+) }
 
 ```
 
-Via reflection
+Be lazy and use reflection
 ```kotlin
-data class Person(val name:String, val address:String)
-val persons :List&lt;Person&gt; = ...
+data class Person(val name:String, val age:Int)
+val persons :List&lt;Person&gt; = listOf(Person("Max", 23), Person("Anna", 43))
 
-// convert collections into data-frames
 val personsDF: DataFrame = persons.asDataFrame() 
+personsDF
+```
 
-// convert collections into data-frames
-val personsDF2: DataFrame = dataFrameOf("person")(persons) 
+```
+age   name
+ 23   Max
+ 43   Anna
+```
+
+---
+# Type support - Part 2: List columns
+
+`krangl` supports arbitrary types per column
+
+```kotlin
+
+val objects: DataFrame = dataFrameOf("person")(persons) 
 
 personsDF2.unwrap("person", keep=T)
 
-val personsRestored :Iterable&lt;Person&gt; = df
 
-// print data class schema for table
-personsDF.printDataClassSchema("sumDF")
+print(personsDF2)
+personsDF2.glimpse()
+```
 
 ```
+                      person
+   Person(name=Max, age=23)
+   Person(name=Anna, age=43)
+```
+----
+```
+DataFrame with 2 observations
+person	: [Any]	, [Person(name=Max, age=23), Person(name=Anna, age=43)]
+```
+
+
+---
+# Type support - Part 3: Let krangl define the schema
+
+
+Infer a schema with
+
+```kotlin
+irisData.printDataClassSchema(Iris")
+```
+which makes krangl to __print__ the Kotlin data class schema for data frame:
+
+```kotlin
+data class Iris(val sepalLength: Double, val sepalWidth: Double, val petalLength: Double, val petalWidth: Double, val species: String)
+val records = irisData.rowsAs&lt;Iris&gt;()
+
+```
+Paste it back into workflow and continue with typed objects!
+
+
 
 todo add output!
 
@@ -690,12 +766,56 @@ val persons :Iterable&lt;Person&gt; = df
 
 
 ---
+## Bumpy API corners
+
+#### Lists in table formulas cause operator confusion
+
+```kotlin
+// will just add 3 to list of objects
+users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age } + 3 }
+// correct
+users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age + 3 }  }
+// works because `DataCol.plus` can be defined
+users.addColumn("age_plus_3") { it["age"] + 3 }  }
+```
+
+--
+#### Receiver vs parameter functions vs properties
+
+How to write vector utilties?
+
+```
+dataFrame.summarize("mean_salary") { mean(it["salaray"]) }    // function parameter 
+dataFrame.summarize("mean_salary") { it["salaray"].mean() }   // extension/member function
+dataFrame.summarize("mean_salary") { it["salaray"].mean }     // extension property
+```
+
+
+---
+## Next steps with `krangl`
+
+
+Project still in flux towards a convenient and consistent API design
+
+* Use dedicated table formula result type to avoid runtime errors
+* Better lambda receiver contexts
+* Performance (indicies, compressed columns, pluggable native backends)
+* `Sequence` vs `Iterable`
+* Parquet support
+* More bindings to other jvm data-science libraries
+* Better documentation &amp; cheatsheets
+
+
+---
 # Beyond Tables
+
+### 90% of Data Science is *just* table integration!
+
+But still we want to do
 
 * Data Visualization
 * Statistics
-* Regression
-* Classification
+* Regression &amp; Classification
 
 
 * https://github.com/thomasnield/kotlin-statistics
@@ -704,15 +824,26 @@ val persons :Iterable&lt;Person&gt; = df
 
 https://github.com/thomasnield/kotlin-data-science-resources
 
+
 ---
-# Data Visualization Pointers
+# Data Visualization
 
 Still no coherent framework
 
 JVM graphics device project?
 
+
 ---
-# Example: How to perform a t-test?
+# Regression &amp; Classification
+
+https://github.com/haifengl/smile
+
+https://deeplearning4j.org/
+
+---
+# Statistics
+
+Example: How to perform a t-test?
 
 
 ---
@@ -735,31 +866,6 @@ also see http://scikit-learn.org/stable/modules/linear_model.html
 
 https://github.com/thomasnield/kotlin-statistics#linear-regression
 
----
-# How to build a CNN?
-
-
-???
-
-limited view
-
----
-# Tooling
-
-R --&gt; [RStudio](https://www.rstudio.com/) or R [Plugin for Intellij](https://plugins.jetbrains.com/plugin/6632-r-language-support)
-
-Python --&gt; [Spyder](https://github.com/spyder-ide/spyder) or pycharm
-kernel is there but not yet fun
-
----
-# Notbooks
-
-Pickup users where they are already
-
-Notebook environments are extremly popular
-
----
-# **The** IDE
 
 ---
 
@@ -819,6 +925,8 @@ https://github.com/twosigma/beakerx
 
 ???
 
+beakerx: adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/master/beakerx and morpheus
+
 ---
 
 ![](images/kotlin_notebook_example.png)
@@ -834,28 +942,23 @@ https://github.com/twosigma/beakerx
 How to achieve this with Kotlin?
 
 
-
-
----
-## BeakerX
-
-jupyter + extensions
-
-![](images/659a9e26.png)
-
-
-
-
-???
-
-adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/master/beakerx and morpheus
-
 ---
 ## What else?
 
 * https://github.com/jtablesaw/tablesaw
 * https://github.com/kyonifer/koma
 
+
+
+---
+# **The** IDE
+
+
+R --&gt; [RStudio](https://www.rstudio.com/) or R [Plugin for Intellij](https://plugins.jetbrains.com/plugin/6632-r-language-support)
+
+Python --&gt; [Spyder](https://github.com/spyder-ide/spyder) or pycharm
+
+kernel is there but not yet fun
 
 
 ---
@@ -872,60 +975,18 @@ coming back to initial motivation.
  ([pandas](http://pandas.pydata.org/), [dplyr](http://dplyr.tidyverse.org/)) and visualization ([ggplot2](http://ggplot2.org/), [seaborn](https://community.modeanalytics.com/python/libraries/seaborn/), [d3](https://d3js.org/))
 
 
----
-## Bumpy API corners
+Data Science Stack
 
-Don't overload `operator Any?.plus` --&gt; Confusion
-
-```kotlin
-// will just add 3 to list of objects
-users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age } + 3 }
-// correct
-users.addColumn("age_plus_3") { it["user"].map&lt;User&gt; { it.age + 3 }  }
-
-// works because `DataCol.plus` can be defined
-users.addColumn("age_plus_3") { it["age"] + 3 }  }
-```
-
-receiver vs parameter functions
-* Extension functions are tempting, but for many `mean(x)` feels less natural compared to `x.mean()` (or even `x.mean`
-```
-dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
-// function paramater
-dataFrame.summarize("mean_salary"){ it["salaray"].mean()}
-// extension property
-dataFrame.summarize("mean_salary"){ it["salaray"].mean}
-```
-
-* operators can not be overridden for collections, that is vectorized `+`, `!`,  `&amp;&amp;` etc.
-```kotlin
-```
-
-pro &amp; con?
-
-
----
-## Next steps
-
-
-`krangl`
-* Group by selector function `df.groupBy{ it["name"].startsWith("F") }`
-* Performance (indcies, compressed columns)
-* Parquet support
-* Allow to pluggable backends
+* Render this presentation with the kotlin kernel
 * Fill missing-bits and pieces
-* More bindings to other jvm datascience libraries
-* Docs &amp; Blogs
-* Build own cheatsheets
-* Reiteratve over API again and again
-
+* Evolve report rendering approach into tool
+* Continue `kravis` for visualzation including a JVM DS plotting device
 
 
 ---
 ## Summary
 
-### 90% of Data Science is *just* table integration!
---
+
 
 ### `krangl` tries to solve it using idomatic Kotlin patterns
 --
