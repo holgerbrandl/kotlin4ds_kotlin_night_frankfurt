@@ -1236,9 +1236,9 @@ class:  inverse
 
 ### There's a fascinating JVM data science ecosystem out there, ready to be unleashed on your data
 
----
+--
 
-### Most wanted: Consistent visualization API for Kotlin/JVM
+### Most wanted: Consistent and versatile visualization API for Kotlin/JVM
 
 --
 
@@ -1246,16 +1246,10 @@ class:  inverse
 
 --
 
-#### **Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
+##### **Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
 
 ???
 
 `krangl` tries to bring pandas/dplyr to Kotlin
 
 Keep working with github community on [krangl](https://github.com/holgerbrandl/krangl), kravis & [kscript](https://github.com/holgerbrandl/kscript)
-
-
----
-Figure References
-
-* https://www.rstudio.com/
