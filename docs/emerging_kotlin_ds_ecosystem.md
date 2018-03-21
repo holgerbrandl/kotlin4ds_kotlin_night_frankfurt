@@ -1099,7 +1099,7 @@ https://github.com/deeplearning4j/dl4j-examples/blob/master/dl4j-examples/src/ma
 
 http://commons.apache.org/proper/commons-math/ and https://github.com/chen0040/java-glm
 
-Example: How to perform a fit linear regression model per group?
+Example: How to fit a linear regression model per group?
 
 ```kotlin
 val irisModel = irisData
@@ -1110,7 +1110,8 @@ val irisModel = irisData
 
         val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
         SimpleRegression().apply { addObservations(xTransposed, y) }
-    }.unfold<SimpleRegression>("lm", properties = listOf("intercept", "slope"))
+    }
+    .unfold<SimpleRegression>("lm", properties = listOf("intercept", "slope"))
 ```
 ```
    Species                                                                   lm       slope   intercept
