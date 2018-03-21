@@ -1116,10 +1116,6 @@ val irisModel = irisData
 
         val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
         SimpleRegression().apply { addObservations(xTransposed, y) }
-//    }.addColumns(
-//        "slope" to { it["lm"].map&lt;SimpleRegression&gt; { it.slope } },
-//        "intercept" to { it["lm"].map&lt;SimpleRegression&gt; { it. } }
-//    )
     }.unfold&lt;SimpleRegression&gt;("lm", properties = listOf("intercept", "slope"))
 ```
 ```
@@ -1239,9 +1235,8 @@ R: R scripts --&gt; `spin` -&gt; `knit` -&gt; `pandoc`
 
 R -&gt;  (**Speakers choice!**)
 
-*  IDE markdown support good
+*  IDE markdown support very good
 *  Kotln code chunk support not usable
-*  Literate
 
 
 ---

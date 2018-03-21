@@ -1110,10 +1110,6 @@ val irisModel = irisData
 
         val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
         SimpleRegression().apply { addObservations(xTransposed, y) }
-//    }.addColumns(
-//        "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
-//        "intercept" to { it["lm"].map<SimpleRegression> { it. } }
-//    )
     }.unfold<SimpleRegression>("lm", properties = listOf("intercept", "slope"))
 ```
 ```
