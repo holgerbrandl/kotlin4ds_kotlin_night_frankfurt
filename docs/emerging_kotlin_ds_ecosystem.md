@@ -87,7 +87,7 @@ https://github.com/Kotlin/KEEP/blob/scripting/proposals/scripting-support.md
 
 
 ---
-ckground-image: url(images/kotlin_logo.jpg)
+background-image: url(images/kotlin_logo.jpg)
 background-position: center
 background-repeat: no-repeat
 background-size: 78%
@@ -137,26 +137,36 @@ Language seemed nice, but no library support.
 
 
 ---
-# Can we build data science APIs with Kotlin?
+background-image: url(images/java_reading.jpg)
+background-position: center
+background-repeat: no-repeat
+background-size: 90%
+
+# Can we build data science workflows with Kotlin?
 
 
-Why should we?
+Should we? Yes, because
 
-* Reproducibility, Dependencies & Scalability: Java
-* Prototyping & Community: R & Python
+* R & Python fail to be scalable & robust solutions for data science
+* Java is known great dependency tooling & Scalability
+* Java is not suited as a language for data-science (cluttered, legacy)
 
-
-Language requirements
-* Can we express typical data problem?
-* Core concepts untyped data (json, tsv, unstructured)?
-
-For detailed arguments see [kscript @ kotlin-conf slides](https://holgerbrandl.github.io/kscript_kotlinconf_2017/kscript_kotlinconf.html).
-
-So can we?
+For detailed arguments see [kscript @ kotlin-conf slides](https://holgerbrandl.github.io/kscript_kotlinconf_2017/kscript_kotlinconf.html)
 
 --
 
-### We wont' know without trying!
+Language requirements for the data science live cycle
+#### 1. Can we express typical data problems and workflows?
+#### 2. Can we model core concepts (typed vs untyped data, json, tsv, unstructured)?
+
+--
+
+### So can we?
+
+
+--
+
+## We wont' know without trying!
 
 
 ---
@@ -269,7 +279,7 @@ assess if it would by any fun to work with such an API!
 * [termsql](https://github.com/tobimensch/termsql) converts text from a file or from stdin into SQL table using sqlite and query it instantly
 * [Dex : The Data Explorer](https://github.com/PatMartin/Dex) is a data visualization tool written capable of powerful ETL and reporting
 
-Great stuff, but not what we want!
+Great stuff, but does not really include we want!
 
 ---
 class: inverse
@@ -450,6 +460,14 @@ Major APIs
 .pull-right[
 ![](images/tidyverse.png)
 ]
+
+???
+
+http://dplyr.tidyverse.org/articles/programming.html
+
+> Most dplyr functions use non-standard evaluation (NSE). This is a catch-all term that means they don't follow the usual R rules of evaluation. Instead, they capture the expression that you typed and evaluate it in a custom way.
+
+
 
 ---
 background-image: url(images/tidyr_cs_checked.png)
@@ -1088,21 +1106,36 @@ beakerx: adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/maste
 
 
 ---
-## Report rendering
 
-* see https://deanattali.com/2015/03/24/knitrs-best-hidden-gem-spin/
+background-image: url(images/spin_workflow.jpg)
+background-position: bottom
+background-size: 95%
 
-* R script with special annotations --> convert to Rmarkdown --> evaluate all cells using knitr --> convert to html using pandoc
+# Literate programming: Turn code into reports
 
-How to achieve this with Kotlin?
+Enable result consistency and streamline communication by <br>
+building reports from code
 
-Data Science Stack
+1. Develop data workflows interactively using plain and simple code
+2. Build reports embedding code and results
 
-* Render this presentation with the kotlin kernel
-* Fill missing-bits and pieces
-* Evolve report rendering approach into tool
-* Continue `kravis` for visualization including a JVM DS plotting device
 
+Python:  markdown -> `notedown` + `nbconvert`
+
+R: R scripts --> `spin` -> `knit` -> `pandoc`
+
+--
+
+## Can we do literate programming with Kotlin?
+
+
+???
+
+R ->  (**Speakers choice!**)
+
+*  IDE markdown support good
+*  Kotln code chunk support not usable
+*  Literate
 
 
 ---
@@ -1169,6 +1202,14 @@ Alternative approaches?
 <a href="../src/main/kotlin/report_rendering/krangl_example_report.html" rel="some text">![](images/kts_report.png)</a>
 
 
+???
+
+Feels like the holy grail for reproducible research. Strict dependency model, literate programming, amazing modern language. Let's go for it!
+
+What do we need is coding environment! Next 20 slides, VIMs kotlin language pack, 10 build sources, 10 installation process.
+
+... Kidding:
+
 ---
 
 background-image: url(images/the_ide.png)
@@ -1200,7 +1241,6 @@ Almost.
 REPL needs more work
 
 * [KT-11409](https://youtrack.jetbrains.com/issue/KT-11409) Add action "Send Selection To Kotlin Console"
-* [KT-12583](https://youtrack.jetbrains.com/issue/KT-12583) IDE REPL should run in project root directory
 * [KT-7100](https://youtrack.jetbrains.com/issue/KT-7100) REPL: allow adding a library to the classpath
 * [KT-14851](https://youtrack.jetbrains.com/issue/KT-14851) "this" is always defined in Kotlin REPL
 * [KT-21224](https://youtrack.jetbrains.com/issue/KT-21224 ) Incorrect alignment of commands and outputs in REPL
@@ -1216,12 +1256,17 @@ No graphics device
 ???
 
 graphics device: extension points + plugin
+* embedded REPL output? dedicated tool window?
 
 Make the world a better place by raising...
 
 
 
 kotlin conf rumours about **Data-Science IDE**
+
+
+other
+* [KT-12583](https://youtrack.jetbrains.com/issue/KT-12583) IDE REPL should run in project root directory
 
 
 ---

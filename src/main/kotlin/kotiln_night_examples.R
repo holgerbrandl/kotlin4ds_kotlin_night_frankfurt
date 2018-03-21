@@ -1,10 +1,14 @@
-# Title     : TODO
-# Objective : TODO
-# Created by: brandl
-# Created on: 3/19/18
-
-devtools::source_url("https://raw.githubusercontent.com/holgerbrandl/datautils/v1.46/R/core_commons.R")
+#' ## Iris Flowers
 
 require(corrr)
+require(dplyr)
+require(ggplot2)
 
-iris %>% select_if(is.numeric) %>%correlate()
+#' Do a correlation analysis
+iris %>% select_if(is.numeric) %>% correlate()
+
+#' Check for feature correlation with scatter plot
+ggplot(iris, aes(Sepal.Length, Sepal.Width, colour=Species)) +
+    geom_point()
+
+# other comments
