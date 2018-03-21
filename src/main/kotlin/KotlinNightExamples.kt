@@ -18,12 +18,21 @@ fun main(args: Array<String>) {
     //    tidyExamples()
     //    jupyterExample()
     //    reshapingExamples()
-    //    typeSupport()
+//        typeSupport()
+        irisFromSchema()
     //    allTogether()
     //    ttest()
-    linRegression()
+//    linRegression()
     //    apiIssues()
 
+}
+
+fun irisFromSchema() {
+    data class Iris(val sepalLength: Double, val sepalWidth: Double, val petalLength: Double,
+                    val petalWidth: Double, val species: String)
+
+    val records: Iterable<Iris> = irisData.rowsAs<Iris>()
+    print(records.take(2))
 }
 
 fun allTogether() {

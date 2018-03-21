@@ -19,3 +19,5 @@ We will walk through existing tooling to do data science with Kotlin (Jupyter, R
 
 * implement `nest`/`unnest`
 * implement property unwrapping
+* use unwrap for regression example to streamline code
+

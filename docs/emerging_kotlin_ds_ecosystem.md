@@ -773,19 +773,13 @@ age   name
 ```
 
 ---
-# Type support - Part 2: List columns
+# Type support - Part 2: List/object columns
 
 `krangl` supports arbitrary types per column
 
 ```kotlin
-
-val objects: DataFrame = dataFrameOf("person")(persons) 
-
-personsDF2.unwrap("person", keep=T)
-
-
-print(personsDF2)
-personsDF2.glimpse()
+val persons: DataFrame = dataFrameOf("person")(persons) 
+persons
 ```
 
 ```
@@ -793,7 +787,11 @@ personsDF2.glimpse()
    Person(name=Max, age=23)
    Person(name=Anna, age=43)
 ```
-----
+
+```kotlin
+personsDF2.glimpse()
+```
+
 ```
 DataFrame with 2 observations
 person	: [Any]	, [Person(name=Max, age=23), Person(name=Anna, age=43)]
@@ -801,26 +799,7 @@ person	: [Any]	, [Person(name=Max, age=23), Person(name=Anna, age=43)]
 
 
 ---
-# Type support - Part 3: Let krangl define the schema
-
-
-Infer a schema with
-
-```kotlin
-irisData.printDataClassSchema(Iris")
-```
-which makes krangl to __print__ the Kotlin data class schema for data frame:
-
-```kotlin
-data class Iris(val sepalLength: Double, val sepalWidth: Double, val petalLength: Double, val petalWidth: Double, val species: String)
-val records = irisData.rowsAs<Iris>()
-
-```
-Paste it back into workflow and continue with typed objects!
-
-
----
-# Type support - Part 4: Unwrap objects into columns
+# Type support - Part 3: Unwrap objects into columns
 
 * similar to `separate()` but for object columns
 
@@ -851,6 +830,41 @@ personsDF.ncol
 ```
 3
 ```
+
+---
+# Type support - Part 4: Let krangl define the schema
+
+
+Infer a schema with
+
+```kotlin
+irisData.printDataClassSchema(Iris")
+```
+which makes krangl to __print__ the Kotlin data class schema for data frame:
+
+```kotlin
+data class Iris(val sepalLength: Double, val sepalWidth: Double, val petalLength: Double, 
+                val petalWidth: Double, val species: String)
+                
+val records: Iterable<Iris> = irisData.rowsAs<Iris>()
+```
+
+Paste it back into workflow code and continue with typed objects!
+
+```kotlin
+records.take(1)
+```
+
+```
+[ Iris(sepalLength=5.1, sepalWidth=3.5, petalLength=1.4, petalWidth=0.2, species=setosa) ]
+```
+
+
+???
+
+grand finale
+
+applicable for interactive workflow only
 
 ---
 # Bumpy API corners
@@ -899,15 +913,20 @@ Project still in flux towards a convenient and consistent API design
 
 --
 
-* Use dedicated type for table formula results to avoid runtime errors
-* Better lambda receiver contexts
-* Performance (indicies, avoid list and array copies, compressed columns)
-* Pluggable backends like native or SQL
-* `Sequence` vs `Iterable`?
-* More bindings to other jvm data-science libraries
-* Date columns support
-* Better documentation & cheatsheets
+Next steps
 
+* Date column support
+* Better lambda receiver contexts
+* Performance (indices, avoid list and array copies, compressed columns)
+* Use dedicated return type for table formula helpers (like `mean`, `rank`) to reduce runtime errors
+* More bindings to other jvm data-science libraries
+* Better documentation & cheatsheets
+* `Sequence` vs `Iterable`?
+* Pluggable backends like native or SQL
+
+--
+
+### Feel welcome with PRs, ideas, bug reports at https://github.com/holgerbrandl/krangl
 
 ---
 class: middle, inverse
@@ -963,11 +982,17 @@ Many options
 
 --
 
-#### Still no coherent `ggplot2` like framework.
+#### 1. Still no coherent `ggplot2` like framework with grammar for graphics
+
+> `layers` + `aesthetics` + `coordinates system` + `transformations` + ` facets`
 
 --
 
-#### Needed: JVM graphics device project that works from Kotlin REPL, in Intellij, and in jupyter notebooks
+#### 2. JVM graphics device project that works from Kotlin REPL, in Intellij, and in jupyter notebooks
+
+???
+
+`one or more layers` + `map variables from data space to visual space` + `coordinates system` + `statistical transformations` + `optional facets`
 
 
 ---
@@ -1061,9 +1086,7 @@ https://github.com/deeplearning4j/dl4j-examples/blob/master/dl4j-examples/src/ma
 ---
 # Statistics
 
-http://commons.apache.org/proper/commons-math/
-
-https://github.com/chen0040/java-glm
+http://commons.apache.org/proper/commons-math/ and https://github.com/chen0040/java-glm
 
 Example: How to perform a fit linear regression model per group?
 
@@ -1140,25 +1163,25 @@ https://unidata.github.io/online-python-training/introduction.html
 ---
 # Kotlin Notebooks?
 
-* A kernel provides programming language support in Jupyter. IPython is the default kernel. Additional kernels include R, Julia, and many more.
+> A kernel provides programming language support in Jupyter. IPython is the default kernel. Additional kernels include R, Julia, and many more.
 
 Two competing kernels for Kotlin
 
-https://github.com/ligee/kotlin-jupyter
+1. https://github.com/ligee/kotlin-jupyter
 
-* More established
-* Backed by JB
-* Friendly and responsive developers
-* Not really active
+    * More established
+    * Backed by JB
+    * Friendly and responsive developers
+    * Not really active
 
-https://github.com/twosigma/beakerx
+2. https://github.com/twosigma/beakerx
 
-> a collection of JVM kernels and interactive widgets for plotting, tables, auto-translation, and other extensions to Jupyter Notebook.
+    > a collection of JVM kernels and interactive widgets for plotting, tables, auto-translation, and other extensions to Jupyter Notebook.
 
-* Very active, fast progress
-* Friendly and very responsive developers
-* Not __just__ a kernel
-* Display handler registry in kernel `krangl.beakerx.TableDisplayer.register()`
+    * Very active, fast progress
+    * Friendly and very responsive developers
+    * Not __just__ a kernel
+    * Display handler registry in kernel `krangl.beakerx.TableDisplayer.register()`
 
 ???
 
@@ -1168,6 +1191,9 @@ beakerx: adapaters for tablesaw https://github.com/jtablesaw/tablesaw/tree/maste
 
 ![](images/kotlin_notebook_example.png)
 
+???
+
+Definietly cool, but lacks effieciency because of missing tooling (error checking, compeltion, refactoring)
 
 ---
 
@@ -1263,6 +1289,7 @@ All but the last step could be reworked into a standalone tool.
 
 ???
 
+the geeky corner
 
 Alternative approaches?
 
