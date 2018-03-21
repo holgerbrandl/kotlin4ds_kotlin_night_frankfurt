@@ -154,7 +154,7 @@ For detailed arguments see [kscript @ kotlin-conf slides](https://holgerbrandl.g
 
 --
 
-Language requirements for the data science live cycle
+Language requirements for the data science life cycle
 #### 1. Can we express typical data problems and workflows?
 #### 2. Can we model core concepts (typed vs untyped data, json, tsv, unstructured)?
 
@@ -331,6 +331,10 @@ abstract class DataCol(val name: String) {
 * Internal length and type consistency checks (e.g. prevent duplicated column names)
 
 ???
+
+Approached it from a naive forward orientied perspective
+
+colleagues: "Holger, work with vectors or you'll end up in hell"
 
 Nullable types core concept of Kotlin !!
 
@@ -652,8 +656,8 @@ df.select("last_name", "weight")
 df.remove("weight", "age")  
 
 // selector mini-language
-df.select({ endsWith("name") })   
-df.select({ matches("foo[0-9") })
+df.select { endsWith("name") }   
+df.select { matches("foo[0-9") }
 
 // functional style column selection
 // odd name to avoid JVM signature clash (help welcome!)
@@ -845,7 +849,7 @@ personsDF.ncol
 Infer a schema with
 
 ```kotlin
-irisData.printDataClassSchema(Iris")
+irisData.printDataClassSchema("Iris")
 ```
 which makes krangl to __print__ the Kotlin data class schema for data frame:
 
@@ -1229,9 +1233,8 @@ R: R scripts --> `spin` -> `knit` -> `pandoc`
 
 R ->  (**Speakers choice!**)
 
-*  IDE markdown support good
+*  IDE markdown support very good
 *  Kotln code chunk support not usable
-*  Literate
 
 
 ---
