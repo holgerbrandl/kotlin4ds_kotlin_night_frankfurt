@@ -56,7 +56,7 @@ class: middle, inverse
 
 
 * Python: `pandas` + `scikit-learn` + `matplotlib`/`seaborn` + `jupyter`
-* R: `readr` + `tidyr` + `dplyr` + `ggplot` + `caret`/`broom` + `ggplot2` + `knitr`
+* R: `readr` + `tidyr` + `dplyr` + `ggplot2` + `caret`/`broom` + `knitr`
 * JVM, and Kotlin in particular?
 
 
@@ -154,8 +154,8 @@ background-size: 90%
 Should we? Yes, because
 
 * R &amp; Python fail to be scalable &amp; robust solutions for data science
-* Java is known great dependency tooling &amp; Scalability
-* Java is not suited as a language for data-science (cluttered, legacy)
+* Java is known for great dependency tooling &amp; scalability
+* Java as a language is less well suited for data-science (cluttered, legacy bits)
 
 For detailed arguments see [kscript @ kotlin-conf slides](https://holgerbrandl.github.io/kscript_kotlinconf_2017/kscript_kotlinconf.html)
 
@@ -218,25 +218,45 @@ for details see https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/
 ```kotlin
 data class Employee(val id:Int, val name:String) 
 val staffStats = listOf(Employee(1, "John"), Employee(2, "Anna"))  
-    ... predictNumSickDays()     // new type!
-    ... addPerformanceMetrics()  // new type!
-    ... addSalaries()            // new type!
-    ... correlationAnalysis()    // odd generic signature :-|
+    .predictNumSickDays()     // new type!
+    .addPerformanceMetrics()  // new type!
+    .addSalaries()            // new type!
+    .correlationAnalysis()    // odd generic signature :-|
 ```
 * R/python lack static typing, which make such workflows more fluent/fun to write
 
 ```r
 staff %&gt;% 
-    mutate(sick_days=predictSD(name)) %&gt;% # table with another column
-    left_join(userPerf) %&gt;%               # and some more columns
-    left_join(salaries) %&gt;%               # and even more columns
-    select_if(is.numeric) %&gt;%
-    correlate(type="spearman")            # correlate numeric attributes
+    mutate(sick_days=predictSickDays(name)) %&gt;%   # table with another column
+    left_join(userPerf) %&gt;%                       # and some more columns
+    left_join(salaries) %&gt;%                       # and even more columns
+    select_if(is.numeric) %&gt;%                     
+    correlate(type="spearman")                    # correlate numeric attributes
 ```
 
 ???
 
 correlation via: https://github.com/drsimonj/corrr
+
+
+---
+# Check what's out there
+
+
+* [tablesaw](https://github.com/jtablesaw/tablesaw) which is (according to its authors) the _The simplest way to slice data in Java_
+* [kotliquery](https://github.com/seratch/kotliquery) is a handy database access library
+* [Scala DataTable](https://github.com/martincooper/scala-datatable): a lightweight, in-memory table structure written in Scala
+* [joinery](https://github.com/cardillo/joinery) implements data frames for Java
+* [paleo](https://github.com/netzwerg/paleo) which provides immutable Java 8 data frames with typed columns
+* [morpheus-core](https://github.com/zavtech/morpheus-core) which is a data science framework implementing an R-like data-frame for the JVM
+* [vectorz](https://github.com/mikera/vectorz) is a fast and flexible numerical library for Java featuring N-dimensional arrays
+* [koma](https://kyonifer.github.io/koma/) is a scientific computing library written in Kotlin
+* [termsql](https://github.com/tobimensch/termsql) converts text from a file or from stdin into SQL table using sqlite and query it instantly
+* [Dex : The Data Explorer](https://github.com/PatMartin/Dex) is a data visualization tool written capable of powerful ETL and reporting
+
+
+### Great stuff, but does not really include we want here!
+
 
 ---
 # Wanted: Mix typed and untyped data
@@ -267,28 +287,11 @@ dataFrame.addColumn("intial"){ it["user"].map&lt;User&gt;{ it.name.first() }}
 
 ???
 
-1st part: easy, just look how the others do it
+1st part: comparably straightforward, just look how the others do it
 2nd: dive into reflection API
 
 assess if it would by any fun to work with such an API!
 
-
----
-# Follow the crowd?
-
-
-* [tablesaw](https://github.com/jtablesaw/tablesaw) which is (according to its authors) the _The simplest way to slice data in Java_
-* [kotliquery](https://github.com/seratch/kotliquery) is a handy database access library
-* [Scala DataTable](https://github.com/martincooper/scala-datatable): a lightweight, in-memory table structure written in Scala
-* [joinery](https://github.com/cardillo/joinery) implements data frames for Java
-* [paleo](https://github.com/netzwerg/paleo) which provides immutable Java 8 data frames with typed columns
-* [morpheus-core](https://github.com/zavtech/morpheus-core) which is a data science framework implementing an R-like data-frame for the JVM
-* [vectorz](https://github.com/mikera/vectorz) is a fast and flexible numerical library for Java featuring N-dimensional arrays
-* [koma](https://kyonifer.github.io/koma/) is a scientific computing library written in Kotlin
-* [termsql](https://github.com/tobimensch/termsql) converts text from a file or from stdin into SQL table using sqlite and query it instantly
-* [Dex : The Data Explorer](https://github.com/PatMartin/Dex) is a data visualization tool written capable of powerful ETL and reporting
-
-Great stuff, but does not really include we want!
 
 ---
 class: inverse
@@ -315,7 +318,7 @@ https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-ma
 
 What is a DataFrame?
 
-&gt; A "tabular"  data structure representing cases (rows), each of which consists of a number of observations or measurements (columns)
+&gt; A "tabular" data structure representing cases/records (rows), each of which consists of a number of observations or measurements (columns)
 
 
 ```kotlin
@@ -327,14 +330,13 @@ abstract class DataCol(val name: String) {
     abstract fun values(): Array&lt;*&gt;
 }
 ```
-* Currently column implementations for `String?`, `Int?`, `Double?`, `Boolean?` and `Any?`
+* Implemented as column model to allow for vectorization where possible
+* Column implementations for `String?`, `Int?`, `Double?`, `Boolean?` and `Any?`
 * Internal length and type consistency checks (e.g. prevent duplicated column names)
 
 ???
 
 Nullable types core concept of Kotlin !!
-
-time to check your phone now --&gt; not needed to use krangl
 
 Def from https://github.com/mobileink/data.frame/wiki/What-is-a-Data-Frame%3F
 
@@ -354,9 +356,10 @@ val tornados = DataFrame.readCSV(pathAsStringFileOrUrl)
 tornados.writeCSV(File("tornados.txt.gz"))
 ```
 
-* Guess column types
+* Guess column types &amp; default parameters
 * Built-in missing value support
-* Convert any iterable into a data-frame via reflection
+
+Convert any iterable into a data-frame via extension function + reflection
 
 ```kotlin
 data class Person(val name:String, val address:String)
@@ -367,7 +370,7 @@ val personsDF: DataFrame = persons.asDataFrame()
 
 
 ---
-# Kotlin Basics Revisited: Function arguments
+# Kotlin Basics Revisited: Function literals
 
 &gt; A _lambda expression_ or an anonymous function is a _function literal_, i.e. a function that is not declared, but passed immediately as an expression.
 
@@ -376,13 +379,12 @@ fun lazyMsg(condition: Boolean, msg: (Date) -&gt; String) {
     if (condition) println(msg(Date()))
 }
 
-lazyMsg(true, { occurred -&gt;"huhu + ${occurred}"})
-
+lazyMsg(true, { occurred -&gt; "huhu + ${occurred}"})
 ```
 
 --
 
-If a function literal has only one parameter, its declaration may be omitted and its name will be `it`..
+If a function literal has only _one_ parameter, its declaration may be omitted and its name will be `it`.
 
 ```kotlin
 lazyMsg(true){ "huhu ${it}" }
@@ -391,7 +393,7 @@ lazyMsg(true){ "huhu" } // .. or ignore it
 
 --
 
-If the last parameter to a function is a function, and you're passing a lambda expression as the corresponding argument, you can specify it outside of parentheses.
+If the _last_ parameter to a function is a function, and you're passing a lambda expression as the corresponding argument, you can specify it outside of parentheses.
 
 ```kotlin
 lazyMsg(true){ "huhu ${it}" }
@@ -399,7 +401,11 @@ lazyMsg(true){ "huhu ${it}" }
 
 ???
 
+to make sure that everyone is on same page, here ....
+
 `msg` is supposed to be a function that takes a `Date` argument and returns a value of type `String`.
+
+cool, but kotlin goes even further
 
 `it`: implicit name of a single parameter
 
@@ -413,7 +419,7 @@ For full details see  https://kotlinlang.org/docs/reference/lambdas.html
 Envisioned user API for `krangl`
 ```kotlin
 val newDf   = staff.addColumn("age_plus_3") { it["age"] + 3 }
-val otherDF = staff.addColumn("row_number") { nrow }
+val otherDF = staff.addColumn("row_number") { rowNumber }
 ```
 
 --
@@ -423,12 +429,13 @@ Behind the scenes
 fun DataFrame.addColumn(columnName: String, expression: TableExpression): DataFrame = 
     addColumn(ColumnFormula(columnName, expression))
 
+// typealias TableExpression = DataFrame.(DataFrame) -&gt; Any? // .. in first prototype, now:
 typealias TableExpression = ExpressionContext.(ExpressionContext) -&gt; Any?
 
 class ExpressionContext(val df: DataFrame) {
     operator fun get(name: String): DataCol = df[name]
 
-    val nrow = df.nrow
+    val rowNumber: List&lt;Int&gt; get() = (1..df.nrow).toList()
 }
 ```
 
@@ -456,7 +463,7 @@ data model, `readCSV`, `addColumn`, what else do we need?
 --
 
 .pull-left[
-* Learn from the best! Learn from the **[`tidyverse`](https://www.tidyverse.org/)**
+* Learn from the best.. Learn from the **[`tidyverse`](https://www.tidyverse.org/)**!
 
 * Supported and condensed into amazing [cheatsheets](https://www.rstudio.com/resources/cheatsheets/) by [rstudio](https://www.rstudio.com/)
 
@@ -464,19 +471,12 @@ Major APIs
 * `tibble` - Data structures
 * `tidyr`  -  Data preparation
 * `dplyr`  -  Data manipulation
-* `purrr`  -  List Columns
+* `purrr`  -  List Columns &amp; nested tables
 ]
 
 .pull-right[
 ![](images/tidyverse.png)
 ]
-
-???
-
-http://dplyr.tidyverse.org/articles/programming.html
-
-&gt; Most dplyr functions use non-standard evaluation (NSE). This is a catch-all term that means they don't follow the usual R rules of evaluation. Instead, they capture the expression that you typed and evaluate it in a custom way.
-
 
 
 ---
@@ -485,6 +485,16 @@ background-position: center
 background-repeat: no-repeat
 background-size: 78%
 
+
+???
+
+r functions defined much more loose in terms argument types, not a simple one-2-one translation
+
+From http://dplyr.tidyverse.org/articles/programming.html
+
+&gt; Most dplyr functions use non-standard evaluation (NSE). This is a catch-all term that means they don't follow the usual R rules of evaluation. Instead, they capture the expression that you typed and evaluate it in a custom way.
+
+Following slides 2 examples: gather + separate
 
 ---
 # Example: Data Reshaping with `krangl`
@@ -515,6 +525,10 @@ Frankfurt              534   2000        435
   Dresden              400   2005        423
 Frankfurt              534   2005        913
 ```
+
+???
+
+`colummns` use function literals again, with column names type as receiver
 
 ---
 # Example: Data Ingestion with `krangl`
@@ -550,6 +564,10 @@ background-position: center
 background-repeat: no-repeat
 background-size: 78%
 
+???
+
+some function intentionally left out, feasabilty prototype first
+
 ---
 background-image: url(images/data_trafo_2_cs_checked.png)
 background-position: center
@@ -563,6 +581,9 @@ background-position: center
 background-repeat: no-repeat
 background-size: 78%
 
+???
+
+nested tables exteremly powerful concept.
 
 ---
 # Add columns with `addColumn`
@@ -594,7 +615,7 @@ df.addColumns(
 ```
 
 ---
-# Get your data in order `sortedBy`
+# Get your data in order with `sortedBy`
 
 ```kotlin
 df.sortedBy("age")
@@ -611,11 +632,16 @@ df.sortedBy({ desc(it["age"]) }, { it["weight"] })
 
 
 // sort with indicator lambda
-df.sortedBy { it["weight"].asInts() }
+df.sortedBy { it["weight"].round() }
 ```
 
+???
+
+mimic Kotlin stdlib where possible
+
+
 ---
-# Subset columns with `select`
+# Subset variables with `select`
 
 ```kotlin
 // positive selection
@@ -631,6 +657,9 @@ df.select({ matches("foo[0-9") })
 // functional style column selection
 // odd name to avoid JVM signature clash (help welcome!)
 df.select2 { it is IntCol } 
+
+// rename columns
+df.rename("last_name" to "Nachname")
 ```
 
 ---
@@ -642,10 +671,12 @@ df.filter { it["age"] eq 23 }
 df.filter { it["weight"] gt 50 }
 df.filter({ it["last_name"].isMatching { startsWith("Do")  }})
 
-// In case vectorized operations are not possible or available we can also filter tables by row
-// which allows for scalar operators
+```
+
+In case vectorized operations are not possible or available we can also filter tables by row which allows for scalar operators
+```kotlin
 df.filterByRow { it["age"] as Int &gt; 5 }
-df.filterByRow { (it["age"] as Int).rem(10) == 0 } // round birthdays :-)
+df.filterByRow { (it["age"] as Int).rem(10) == 0 } // "round" birthdays :-)
 
 ```
 
@@ -657,7 +688,7 @@ df.filterByRow { (it["age"] as Int).rem(10) == 0 } // round birthdays :-)
 df.count("age", "last_name")
 
 // ... or calculate single summary statistic
-df.summarize("mean_age" to { it["age"].mean(true) })
+df.summarize("mean_age") { it["age"].mean(true) }
 
 // ... or multiple summary statistics
 df.summarize(
@@ -714,8 +745,12 @@ year   month   day       mean_arr_delay       mean_dep_delay
 2013       7     8              29.6488              37.2966
 2013       8    22              29.9767              33.6004
 2013       2    27               31.252              37.7632
-
 ```
+
+???
+
+either `=` or to will go away most likely
+
 ---
 # Type support - Part 1: Digest objects into attribute columns
 
