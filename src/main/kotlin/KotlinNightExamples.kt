@@ -19,10 +19,10 @@ fun main(args: Array<String>) {
     //    jupyterExample()
     //    reshapingExamples()
 //        typeSupport()
-        irisFromSchema()
+//        irisFromSchema()
     //    allTogether()
     //    ttest()
-//    linRegression()
+    linRegression()
     //    apiIssues()
 
 }
@@ -63,7 +63,7 @@ fun typeSupport() {
     print(personsDF2)
     personsDF2.glimpse()
 
-    //    personsDF2.unwrap("person", keep=T)
+    //    personsDF2.unfold<Person>("person", keep=true)
 
     //    val personsRestored :Iterable<Person> = df
 
@@ -217,10 +217,12 @@ fun linRegression() {
             val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
             SimpleRegression().apply { addObservations(xTransposed, y) }
 
-        }.addColumns(
-            "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
-            "intercept" to { it["lm"].map<SimpleRegression> { it.intercept } }
-        )
+        }
+//        .addColumns(
+//            "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
+//            "intercept" to { it["lm"].map<SimpleRegression> { it.intercept } }
+//        )
+        .unfold<SimpleRegression>("lm", properties = listOf("intercept", "slope"))
 
     irisModel.print()
     irisModel.glimpse()

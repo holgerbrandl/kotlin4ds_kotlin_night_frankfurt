@@ -799,7 +799,7 @@ person	: [Any]	, [Person(name=Max, age=23), Person(name=Anna, age=43)]
 
 
 ---
-# Type support - Part 3: Unwrap objects into columns
+# Type support - Part 3: Unfold objects into columns
 
 * similar to `separate()` but for object columns
 
@@ -821,8 +821,8 @@ Expand properties of `person` into columns via reflection
 
 ```kotlin
 var personsDF = df.
-    unwrap("person", keep=T) 
-    // unwrap("person", keep=T, select=listOf("age"))
+    unfold<Person>("person", keep=true) 
+    // unfold<Person>("person", select=listOf("age"))
     
 personsDF.ncol   
 ```
@@ -1099,12 +1099,11 @@ val irisModel = irisData
 
         val xTransposed = MatrixUtils.createRealMatrix(arrayOf(x)).transpose().data
         SimpleRegression().apply { addObservations(xTransposed, y) }
-
-    }.addColumns(
-        "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
-        "intercept" to { it["lm"].map<SimpleRegression> { it. } }
-    )
-
+//    }.addColumns(
+//        "slope" to { it["lm"].map<SimpleRegression> { it.slope } },
+//        "intercept" to { it["lm"].map<SimpleRegression> { it. } }
+//    )
+    }.unfold<SimpleRegression>("lm", properties = listOf("intercept", "slope"))
 ```
 ```
    Species                                                                   lm       slope   intercept
