@@ -51,3 +51,9 @@ source: http://jules32.github.io/2016-07-12-Oxford/dplyr_tidyr/#2_dplyr_overview
 
 
 steal from http://holgerbrandl.github.io/krangl/bier_slides_june2016/krangl_intro.html#2
+
+
+--
+
+Pandas Examples:
+https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-manipulation/

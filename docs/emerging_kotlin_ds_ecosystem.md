@@ -131,8 +131,7 @@ what a beauty!
 
 teachable: less than python or r, but better tooling
 
-So can we build data science libraries with? Originally answer not really.
-Language seemed nice, but no library support.
+So can we build data science libraries with? --> next slide
 
 
 
@@ -197,7 +196,11 @@ More advanced slicing possible with https://github.com/thomasnield/kotlin-statis
 
 ???
 
+so apart from the amazing language spec, what is in the stdlib for data science
+
 winter is coming --> summer is coming
+
+.. so another year no beachbody
 
 for details see https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-grouping/
 
@@ -229,6 +232,8 @@ staff %>%
 ```
 
 ???
+
+defining types is a tedious process
 
 correlation via: https://github.com/drsimonj/corrr
 
@@ -271,7 +276,7 @@ dataFrame.summarize("mean_salary"){ mean(it["salaray"])}
 val df: DataFrame = dataFrame.leftJoin(otherDF)
 
 // transformations like
-dataFrame.addColumn("intial"){ it["user"].map<User>{ it.name.first() }}
+dataFrame.addColumn("intial"){ it["employee"].map<Employee>{ it.name.first() }}
 ```
 
 `+` `pandas`/`tidyverse` like API to create, manipulate, reshape, combine and summarize  data frames
@@ -301,9 +306,6 @@ Tries to become what pandas is for `python`, and `readr`+`tidyr`+`dplyr` are for
 ???
 
 Rather ambitious goal goal
-
-Pandas Examples:
-https://www.analyticsvidhya.com/blog/2016/01/12-pandas-techniques-python-data-manipulation/
 
 
 ---
@@ -362,6 +364,11 @@ val persons : List<Person> = ...
 val personsDF: DataFrame = persons.asDataFrame() 
 ```
 
+???
+
+low hanging fruits first --> the easy part
+
+try to match kotlin wording `dataFrameOf`
 
 ---
 # Kotlin Basics Revisited: Function literals
