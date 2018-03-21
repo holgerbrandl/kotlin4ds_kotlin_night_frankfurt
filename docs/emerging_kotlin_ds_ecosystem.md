@@ -170,7 +170,7 @@ Language requirements for the data science live cycle
 
 
 ---
-## Use the Kotlin stdlib and spent more time in the gym!?
+# Just use the Kotlin stdlib == more gym time!?
 
 * `map`, `fold`, `filter`, `reduce` are cool and fun
 * Useful IO utilities like `File.readLines()`
@@ -193,15 +193,17 @@ users.groupingBy { listOf(it.age, it.hasSudo) }.map{  ... }.fold{ ... }
 
 More advanced slicing possible with https://github.com/thomasnield/kotlin-statistics
 
-Not enough to implement DS life cycle!
+### Still, not enough to implement DS life cycle!
 
 ???
+
+winter is coming --> summer is coming
 
 for details see https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-grouping/
 
 
 ---
-## To type or not to type?
+# To type or not to type?
 
 * _Static types_ are cool, but most data has no type
 * It's more robust/fun to use types and they allow for better design
@@ -253,6 +255,7 @@ dataFrame.addColumn("intial"){ it["user"].map<User>{ it.name.first() }}
 ```
 
 `+` `pandas`/`tidyverse` like API to create, manipulate, reshape, combine and summarize  data frames
+
 `+` methods to go back and forth between untyped and typed data
 
 
@@ -360,28 +363,29 @@ val personsDF: DataFrame = persons.asDataFrame()
 ---
 # Kotlin Basics Revisited: Function arguments
 
-A _lambda expression_ or an anonymous function is a "function literal", i.e. a function that is not declared, but passed immediately as an expression.
+> A _lambda expression_ or an anonymous function is a _function literal_, i.e. a function that is not declared, but passed immediately as an expression.
 
 ```kotlin
 fun lazyMsg(condition: Boolean, msg: (Date) -> String) {
     if (condition) println(msg(Date()))
 }
 
-lazyMsg(true, { "huhu"})
 lazyMsg(true, { occurred ->"huhu + ${occurred}"})
+
 ```
 
 --
 
-If a function literal has only one parameter, its declaration may be omitted and its name will be `it`:
+If a function literal has only one parameter, its declaration may be omitted and its name will be `it`..
 
 ```kotlin
-lazyMsg(true){ "huhu ${it}"}
+lazyMsg(true){ "huhu ${it}" }
+lazyMsg(true){ "huhu" } // .. or ignore it
 ```
 
 --
 
-If the last parameter to a function is a function, and you're passing a lambda expression as the corresponding argument, you can specify it outside of parentheses:
+If the last parameter to a function is a function, and you're passing a lambda expression as the corresponding argument, you can specify it outside of parentheses.
 
 ```kotlin
 lazyMsg(true){ "huhu ${it}" }
@@ -437,10 +441,12 @@ Context specific for completion in IDE
 
 ![](images/select_completion.png)
 
----
-## How to build a data-frame API?
 
-`readCSV`, `addColum`, what else do we need?
+---
+# How to build a data-frame API?
+
+data model, `readCSV`, `addColumn`, what else do we need?
+
 --
 
 .pull-left[
@@ -454,8 +460,6 @@ Major APIs
 * `dplyr`  -  Data manipulation
 * `purrr`  -  List Columns
 ]
-
---
 
 .pull-right[
 ![](images/tidyverse.png)
@@ -475,8 +479,8 @@ background-position: center
 background-repeat: no-repeat
 background-size: 78%
 
----
 
+---
 # Example: Data Reshaping with `krangl`
 
 ```kotlin
@@ -655,7 +659,7 @@ df.summarize(
     "max_age" to { it["age"].max() }
 )
 
-// for sake of r and python adoptability you can also use `=` here
+// for sake of r and python transition you can also use `=` here
 df.summarize(
     "min_age" `=` { it["age"].min() },
     "max_age" `=` { it["age"].max() }
@@ -780,19 +784,38 @@ val records = irisData.rowsAs<Iris>()
 Paste it back into workflow and continue with typed objects!
 
 
+---
+# Type support - Part 4: Unwrap objects into columns
 
-todo add output!
+* similar to `separate()` but for object columns
+
 
 ```kotlin
+data class Person(val name:String, val age:Int)
+val persons :Iterable<Person> = listOf(Person("Max", 22), Person("Anna", 23))
 
-// transmissive types
-data class Person(val name:String, val address:String)
-val persons :Iterable<Person> = df
-    .unwrap("employee") // expand properties of `Employee` into columns via reflection
-    .rowsAs<Person>()   // extract Person objects via reflection
+val df = dataFrameOf("person")(persons)
 
+df.ncol
+```
+```
+1
+```
+--
+
+Expand properties of `person` into columns via reflection
+
+```kotlin
+var personsDF = df.
+    unwrap("person", keep=T) 
+    // unwrap("person", keep=T, select=listOf("age"))
+    
+personsDF.ncol   
 ```
 
+```
+3
+```
 
 ---
 # Bumpy API corners
@@ -831,7 +854,7 @@ Don't overload `operator Any?.plus` --> Confusion
 https://kotlinlang.org/docs/reference/operator-overloading.html
 
 ---
-## Next steps with `krangl`
+# Quo vadis `krangl`?
 
 Promising API, great learning experience.
 
@@ -1025,6 +1048,12 @@ val irisModel = irisData
     )
 
 ```
+```
+   Species                                                                   lm       slope   intercept
+    setosa   org.apache.commons.math3.stat.regression.SimpleRegression@66133adc       0.798     -0.5694
+versicolor   org.apache.commons.math3.stat.regression.SimpleRegression@7bfcd12c       0.319      0.8721
+ virginica   org.apache.commons.math3.stat.regression.SimpleRegression@42f30e0a       0.2318      1.446
+```
 
 ---
 class: middle, inverse
@@ -1126,7 +1155,7 @@ R: R scripts --> `spin` -> `knit` -> `pandoc`
 
 --
 
-## Can we do literate programming with Kotlin?
+## Can we do this with Kotlin?
 
 
 ???
@@ -1193,7 +1222,12 @@ jupyter nbconvert --ExecutePreprocessor.kernel_name=kotlin \
         --execute --to html ${reportName}.ipynb --output ${reportName}
 ```
 
+Proof-of-Concept. :-)
+
 All but the last step could be reworked into a standalone tool.
+
+???
+
 
 Alternative approaches?
 
@@ -1229,7 +1263,7 @@ Almost.
 
 --
 
-`kts` support still not yet ready for primetime
+`kts` support not yet ready for prime time
 
 * [KT-11618](https://youtrack.jetbrains.com/issue/KT-11618) Dependencies are ignored in .kts files
 * [KT-15019](https://youtrack.jetbrains.com/issue/KT-15019) Editor: `args` reference in .kts file is red
@@ -1256,7 +1290,7 @@ No graphics device
 ???
 
 graphics device: extension points + plugin
-* embedded REPL output? dedicated tool window?
+* Embedded REPL output? dedicated tool window?
 
 Make the world a better place by raising...
 
@@ -1291,7 +1325,9 @@ class:  inverse
 
 --
 
-##### **Thanks to JetBrains Kotlin and IDE team, github community, R/tidyverse community, Max Planck Institute of Molecular Cell Biology and Genetics**
+##### **Thanks to Kotlin and IDE team @JetBrains, github community, R/tidyverse community, <br>Scientific Computing Facility @ Max Planck Institute of Molecular Cell Biology and Genetics**
+
+Slides Repo: https://github.com/holgerbrandl/kotlin4ds_kotlin_night_frankfurt
 
 ???
 

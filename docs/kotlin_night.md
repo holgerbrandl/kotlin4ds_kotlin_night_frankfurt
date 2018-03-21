@@ -17,5 +17,5 @@ We will walk through existing tooling to do data science with Kotlin (Jupyter, R
 
 # Todo
 
-* fix `KotlinNightExamplesKt.linRegression`
 * implement `nest`/`unnest`
+* implement property unwrapping
