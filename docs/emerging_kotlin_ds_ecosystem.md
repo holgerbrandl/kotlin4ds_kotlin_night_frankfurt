@@ -819,12 +819,12 @@ person	: [Any]	, [Person(name=Max, age=23), Person(name=Anna, age=43)]
 data class Person(val name:String, val age:Int)
 val persons :Iterable<Person> = listOf(Person("Max", 22), Person("Anna", 23))
 
-val df = dataFrameOf("person")(persons)
+val df : DataFrame = dataFrameOf("person")(persons)
 
-df.ncol
+df.names
 ```
 ```
-1
+["person"]
 ```
 --
 
@@ -835,11 +835,11 @@ var personsDF = df.
     unfold<Person>("person", keep=true) 
     // unfold<Person>("person", select=listOf("age"))
     
-personsDF.ncol   
+personsDF.names   
 ```
 
 ```
-3
+["person", "name", "age"]
 ```
 
 ---
@@ -1301,7 +1301,7 @@ Alternative approaches?
 
 ---
 
-<a href="../src/main/kotlin/report_rendering/krangl_example_report.html" rel="some text">![](images/kts_report.png)</a>
+<a href="./krangl_example_report.html" rel="some text">![](images/kts_report.jpg)</a>
 
 
 ???

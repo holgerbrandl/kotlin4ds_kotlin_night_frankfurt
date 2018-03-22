@@ -1,6 +1,6 @@
 //' ## Flowers Analysis
 
-//' The iris flower:
+//' The iris flower
 //' ![](https://goo.gl/tTbZMq)
 
 @file:MavenRepository("bintray-plugins","http://jcenter.bintray.com")
@@ -10,17 +10,18 @@ import krangl.*
 
 
 
-//' The first records ininput data which is bundled with krangl is
+//' The first records in the input data (which is bundled with krangl) are
 irisData
 
 //' The structure of the input data is
 irisData.glimpse()
 
-//' Calculate mean petal width
+//' Calculate mean petal
 val summarizeDf: DataFrame = irisData
     .groupBy("Species")
     .summarize("mean_petal_width") { it["Petal.Width"].mean() }
 
+//' Print the summarized data
 summarizeDf.print()
 
-//' conclusion: Iris flowers of species _virginica_ have on average largest petal width.
+//' Conclusion: Iris flowers of species _virginica_ have on average the largest petal width.
